@@ -1,4 +1,4 @@
-package tcp
+package stream
 
 import (
 	"encoding/binary"
@@ -8,15 +8,15 @@ import (
 	"github.com/smartystreets/messaging"
 )
 
-type FrameWriter struct {
+type Writer struct {
 	socket io.WriteCloser
 }
 
-func NewFrameWriter(socket io.WriteCloser) *FrameWriter {
-	return &FrameWriter{socket: socket}
+func NewWriter(socket io.WriteCloser) *Writer {
+	return &Writer{socket: socket}
 }
 
-func (this *FrameWriter) Write(dispatch messaging.Dispatch) error {
+func (this *Writer) Write(dispatch messaging.Dispatch) error {
 	payloadSize := len(dispatch.Payload)
 	if payloadSize == 0 {
 		return nil
@@ -37,7 +37,7 @@ func (this *FrameWriter) Write(dispatch messaging.Dispatch) error {
 	return nil
 }
 
-func (this *FrameWriter) Close() {
+func (this *Writer) Close() {
 	this.socket.Close()
 }
 
