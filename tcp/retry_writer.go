@@ -24,7 +24,7 @@ func NewRetryWriter(address string, dialer net.Dialer, options ...WriterOption) 
 }
 
 func (this *RetryWriter) Write(dispatch messaging.Dispatch) error {
-	if writer, err := this.writer(); err != nil {
+	if writer, err := this.openWriter(); err != nil {
 		return err
 	} else if err = writer.Write(dispatch); err != nil {
 		this.Close()
@@ -33,7 +33,7 @@ func (this *RetryWriter) Write(dispatch messaging.Dispatch) error {
 		return nil
 	}
 }
-func (this *RetryWriter) writer() (messaging.Writer, error) {
+func (this *RetryWriter) openWriter() (messaging.Writer, error) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
