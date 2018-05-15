@@ -22,7 +22,7 @@ func (this *FrameWriter) Write(dispatch messaging.Dispatch) error {
 		return nil
 	}
 
-	if payloadSize > maxPayloadSize {
+	if payloadSize > maxFrameSize {
 		return payloadTooLarge
 	}
 
@@ -41,6 +41,6 @@ func (this *FrameWriter) Close() {
 	this.socket.Close()
 }
 
-const maxPayloadSize = 64*1024 - 1
+const maxFrameSize = 64*1024 - 2
 
 var payloadTooLarge = errors.New("payload is too large")
