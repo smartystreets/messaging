@@ -33,18 +33,18 @@ func (this *Reader) Listen() {
 	close(this.deliveries)
 }
 func (this *Reader) listen() {
-	for {
-		if socket, err := this.listener.Accept(); err == nil {
-			this.beginParse(socket)
-		} else {
-			// TODO: depending upon the type of error, e.g. the bind is closed, break
-		}
+	for this.handle(this.listener.Accept()) {
 	}
 }
-func (this *Reader) beginParse(socket net.Conn) {
+func (this *Reader) handle(socket net.Conn, err error) bool {
+	if err != nil {
+		return false // TODO: depending upon the type of error, e.g. the bind is closed, break
+	}
+
 	this.sockets = append(this.sockets, socket)
 	this.waiter.Add(1)
 	go this.parse(socket)
+	return true
 }
 func (this *Reader) parse(socket net.Conn) {
 	parser := newParser(socket, this.deliveries, readDeadline)
@@ -54,9 +54,11 @@ func (this *Reader) parse(socket net.Conn) {
 
 func (this *Reader) Close() {
 	this.listener.Close()
+
 	for _, socket := range this.sockets {
 		socket.Close()
 	}
+
 	this.sockets = nil
 }
 
