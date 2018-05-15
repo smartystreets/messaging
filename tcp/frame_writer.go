@@ -8,15 +8,15 @@ import (
 	"github.com/smartystreets/messaging"
 )
 
-type Writer struct {
+type FrameWriter struct {
 	socket net.Conn
 }
 
-func NewWriter(socket net.Conn) *Writer {
-	return &Writer{socket: socket}
+func NewFrameWriter(socket net.Conn) *FrameWriter {
+	return &FrameWriter{socket: socket}
 }
 
-func (this *Writer) Write(dispatch messaging.Dispatch) error {
+func (this *FrameWriter) Write(dispatch messaging.Dispatch) error {
 	payloadSize := len(dispatch.Payload)
 	if payloadSize == 0 {
 		return nil
@@ -35,6 +35,10 @@ func (this *Writer) Write(dispatch messaging.Dispatch) error {
 	}
 
 	return nil
+}
+
+func (this *FrameWriter) Close() {
+	this.socket.Close()
 }
 
 const maxPayloadSize = 64*1024 - 1
