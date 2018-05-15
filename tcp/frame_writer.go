@@ -3,16 +3,16 @@ package tcp
 import (
 	"encoding/binary"
 	"errors"
-	"net"
+	"io"
 
 	"github.com/smartystreets/messaging"
 )
 
 type FrameWriter struct {
-	socket net.Conn
+	socket io.WriteCloser
 }
 
-func NewFrameWriter(socket net.Conn) *FrameWriter {
+func NewFrameWriter(socket io.WriteCloser) *FrameWriter {
 	return &FrameWriter{socket: socket}
 }
 

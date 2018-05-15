@@ -3,8 +3,8 @@ package tcp
 import (
 	"io"
 	"net"
-
 	"encoding/binary"
+
 	"github.com/smartystreets/clock"
 	"github.com/smartystreets/messaging"
 )
@@ -49,7 +49,7 @@ func (this *Reader) listen() {
 		}
 	}
 }
-func (this *Reader) listenSocket(socket net.Conn) {
+func (this *Reader) listenSocket(socket io.ReadCloser) {
 	defer socket.Close()
 	var length uint16
 
