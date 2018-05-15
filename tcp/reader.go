@@ -1,9 +1,9 @@
 package tcp
 
 import (
+	"encoding/binary"
 	"io"
 	"net"
-	"encoding/binary"
 
 	"github.com/smartystreets/clock"
 	"github.com/smartystreets/messaging"
