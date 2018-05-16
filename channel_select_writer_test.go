@@ -21,7 +21,7 @@ type ChannelSelectWriterFixture struct {
 
 func (this *ChannelSelectWriterFixture) Setup() {
 	this.fakeWriter = &FakeChannelWriter{}
-	this.writer = NewChannelSelectWriter(this.fakeWriter, 2)
+	this.writer = NewChannelSelectWriter(this.fakeWriter, WithChannelCapacity(2))
 }
 
 func (this *ChannelSelectWriterFixture) TestWritesReachInnerWriter() {
