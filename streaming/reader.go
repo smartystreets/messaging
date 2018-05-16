@@ -45,9 +45,9 @@ func (this *Reader) Listen() {
 }
 
 func (this *Reader) parse(socket io.ReadCloser) {
+	defer this.remove(socket)
 	for this.read(socket) {
 	}
-	this.remove(socket)
 }
 func (this *Reader) read(socket io.Reader) bool {
 	var length uint16 = 0
@@ -69,6 +69,7 @@ func (this *Reader) read(socket io.Reader) bool {
 func (this *Reader) Close() {
 	this.listener.Close() // stop incoming traffic
 
+	// FUTURE: we may only want to shut down the listener and not any active streams
 	this.mutex.Lock()
 	for socket := range this.open {
 		socket.Close()
