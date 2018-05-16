@@ -53,8 +53,6 @@ func (this *Reader) read(socket io.Reader) bool {
 	var length uint16 = 0
 	if err := binary.Read(socket, byteOrdering, &length); err != nil {
 		return false
-	} else if length == 0 {
-		return true
 	}
 
 	buffer := make([]byte, length)
