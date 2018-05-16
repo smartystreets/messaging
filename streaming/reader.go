@@ -67,17 +67,10 @@ func (this *Reader) read(socket io.Reader) bool {
 }
 
 func (this *Reader) Close() {
-	this.listener.Close() // stop incoming traffic
-
-	// FUTURE: we may only want to shut down the listener and not any active streams
-	this.mutex.Lock()
-	for socket := range this.open {
-		socket.Close()
-	}
-	this.mutex.Unlock()
-
-	this.waiter.Wait()
-	close(this.deliveries)
+	this.listener.Close()   // stop incoming traffic
+	this.closeOpenSockets() // FUTURE: we may only want to shut down the listener and not any active streams
+	this.waiter.Wait()      // once all sockets are closed
+	close(this.deliveries)  // no open sockets guarantees = no more sends to this channel
 }
 
 func (this *Reader) add(socket io.Closer) {
@@ -91,6 +84,14 @@ func (this *Reader) remove(socket io.Closer) {
 	delete(this.open, socket)
 	this.mutex.Unlock()
 	this.waiter.Done()
+}
+func (this *Reader) closeOpenSockets() {
+	this.mutex.Lock()
+	for socket := range this.open {
+		socket.Close()
+	}
+	this.mutex.Unlock()
+
 }
 
 func (this *Reader) acknowledge() {
