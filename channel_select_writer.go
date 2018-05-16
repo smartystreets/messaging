@@ -7,11 +7,12 @@ type ChannelSelectWriter struct {
 	inner Writer
 }
 
-func NewChannelSelectWriter(writer Writer, capacity int) *ChannelSelectWriter {
-	return &ChannelSelectWriter{
-		input: make(chan Dispatch, capacity),
-		inner: writer,
+func NewChannelSelectWriter(writer Writer, options ...ChannelSelectWriterOption) *ChannelSelectWriter {
+	this := &ChannelSelectWriter{inner: writer, input: make(chan Dispatch, defaultChannelCapacity)}
+	for _, option := range options {
+		option(this)
 	}
+	return this
 }
 
 func (this *ChannelSelectWriter) Listen() {
@@ -38,3 +39,16 @@ func (this *ChannelSelectWriter) Close() {
 }
 
 var WriteDiscardedError = errors.New("the write was discarded because the channel was full")
+
+const defaultChannelCapacity = 4096
+
+/////////////////////////////////////////////////
+
+type ChannelSelectWriterOption func(*ChannelSelectWriter)
+
+func WithChannelCapacity(capacity int) ChannelSelectWriterOption {
+	return func(this *ChannelSelectWriter) { this.input = make(chan Dispatch, capacity) }
+}
+func WithChannelStart() func(*ChannelSelectWriter) {
+	return func(this *ChannelSelectWriter) { go this.Listen() }
+}
