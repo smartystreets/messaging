@@ -26,7 +26,7 @@ func (this *Writer) Write(dispatch messaging.Dispatch) error {
 		return payloadTooLarge
 	}
 
-	if err := binary.Write(this.socket, binary.LittleEndian, uint16(payloadSize)); err != nil {
+	if err := binary.Write(this.socket, byteOrdering, uint16(payloadSize)); err != nil {
 		return err
 	}
 
@@ -42,5 +42,6 @@ func (this *Writer) Close() {
 }
 
 const maxFrameSize = 64*1024 - 2
+var byteOrdering = binary.LittleEndian
 
 var payloadTooLarge = errors.New("payload is too large")

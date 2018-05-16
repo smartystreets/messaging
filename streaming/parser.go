@@ -27,7 +27,7 @@ func (this *parser) Parse() {
 
 	for {
 		this.source.SetReadDeadline(this.clock.UTCNow().Add(this.deadline))
-		if err := binary.Read(this.source, binary.LittleEndian, &length); isFatalError(err) {
+		if err := binary.Read(this.source, byteOrdering, &length); isFatalError(err) {
 			break
 		} else if length == 0 {
 			continue
@@ -62,4 +62,6 @@ func isTimeout(err error) bool {
 	return ok && e.Timeout()
 }
 
-func (this *parser) Close() { this.source.Close() }
+func (this *parser) Close() {
+	this.source.Close()
+}

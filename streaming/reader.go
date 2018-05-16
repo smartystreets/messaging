@@ -1,7 +1,6 @@
 package streaming
 
 import (
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -13,7 +12,7 @@ type Reader struct {
 	listener         net.Listener
 	deliveries       chan messaging.Delivery
 	acknowledgements chan interface{}
-	sockets          []io.Closer
+	sockets          []*parser
 	waiter           *sync.WaitGroup
 }
 
@@ -41,13 +40,13 @@ func (this *Reader) handle(socket net.Conn, err error) bool {
 		return false // TODO: depending upon the type of error, e.g. the bind is closed, break
 	}
 
-	this.sockets = append(this.sockets, socket)
+	parser := newParser(socket, this.deliveries, readDeadline)
+	this.sockets = append(this.sockets, parser)
 	this.waiter.Add(1)
-	go this.parse(socket)
+	go this.parse(parser)
 	return true
 }
-func (this *Reader) parse(socket net.Conn) {
-	parser := newParser(socket, this.deliveries, readDeadline)
+func (this *Reader) parse(parser *parser) {
 	parser.Parse()
 	this.waiter.Done()
 }
