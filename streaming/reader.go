@@ -87,7 +87,6 @@ func (this *Reader) closeOpenSockets() {
 	this.mutex.Lock()
 	for socket := range this.open {
 		socket.Close()
-		delete(this.open, socket)
 	}
 	this.mutex.Unlock()
 
