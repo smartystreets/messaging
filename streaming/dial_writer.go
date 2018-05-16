@@ -1,19 +1,24 @@
 package streaming
 
 import (
+	"net"
+
 	"github.com/smartystreets/messaging"
-	"github.com/smartystreets/transports"
 )
 
+type dialer interface {
+	Dial(string, string) (net.Conn, error)
+}
+
 type DialWriter struct {
-	dialer  transports.Dialer
+	dialer  dialer
 	network string
 	address string
 	current *Writer
 }
 
-func NewDialWriter() *DialWriter {
-	return &DialWriter{}
+func NewDialWriter(dialer dialer, network, address string) *DialWriter {
+	return &DialWriter{dialer: dialer, network: network, address: address}
 }
 
 func (this *DialWriter) Write(dispatch messaging.Dispatch) error {
