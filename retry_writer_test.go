@@ -23,7 +23,7 @@ type RetryWriterFixture struct {
 
 func (this *RetryWriterFixture) Setup() {
 	this.inner = &FakeRetryWriter{errorUntil: 42}
-	this.writer = NewRetryWriter(this.inner, 999, this.sleep)
+	this.writer = NewRetryWriter(this.inner, WithMaxAttempts(999), WithRetryCallback(this.sleep))
 }
 func (this *RetryWriterFixture) sleep(value uint64) {
 	this.sleeps++
