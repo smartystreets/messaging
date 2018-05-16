@@ -67,7 +67,7 @@ func (this *Reader) parse(socket io.Reader) bool {
 }
 
 func (this *Reader) Close() {
-	if atomic.AddUint64(&this.closed, 1) == 1 {
+	if atomic.AddUint64(&this.closed, 1) > 1 {
 		return // only allow close to be called once
 	}
 
