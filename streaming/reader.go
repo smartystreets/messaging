@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/smartystreets/clock"
 	"github.com/smartystreets/messaging"
@@ -18,6 +19,7 @@ type Reader struct {
 	open             map[io.Closer]struct{}
 	waiter           *sync.WaitGroup
 	mutex            *sync.Mutex
+	closed           uint64
 	clock            *clock.Clock
 }
 
@@ -65,6 +67,10 @@ func (this *Reader) read(socket io.Reader) bool {
 }
 
 func (this *Reader) Close() {
+	if atomic.AddUint64(&this.closed, 1) == 1 {
+		return // only allow close to be called once
+	}
+
 	this.listener.Close()   // stop incoming traffic
 	this.closeOpenSockets() // FUTURE: we may only want to shut down the listener and not any active streams
 	this.waiter.Wait()      // once all sockets are closed
