@@ -16,7 +16,7 @@ type Reader struct {
 	listener         net.Listener
 	deliveries       chan messaging.Delivery
 	acknowledgements chan interface{}
-	open             map[io.Closer]struct{}
+	tracked          map[io.Closer]struct{}
 	waiter           *sync.WaitGroup
 	mutex            *sync.Mutex
 	closed           uint64
@@ -28,7 +28,7 @@ func NewReader(listener net.Listener, capacity int) *Reader {
 		listener:         listener,
 		acknowledgements: make(chan interface{}, capacity),
 		deliveries:       make(chan messaging.Delivery, capacity),
-		open:             make(map[io.Closer]struct{}),
+		tracked:          make(map[io.Closer]struct{}),
 		waiter:           &sync.WaitGroup{},
 		mutex:            &sync.Mutex{},
 	}
@@ -80,22 +80,21 @@ func (this *Reader) Close() {
 func (this *Reader) add(socket io.Closer) {
 	this.waiter.Add(1)
 	this.mutex.Lock()
-	this.open[socket] = struct{}{}
+	this.tracked[socket] = struct{}{}
 	this.mutex.Unlock()
 }
 func (this *Reader) remove(socket io.Closer) {
 	this.mutex.Lock()
-	delete(this.open, socket)
+	delete(this.tracked, socket)
 	this.mutex.Unlock()
 	this.waiter.Done()
 }
 func (this *Reader) closeOpenSockets() {
 	this.mutex.Lock()
-	for socket := range this.open {
+	for socket := range this.tracked {
 		socket.Close()
 	}
 	this.mutex.Unlock()
-
 }
 
 func (this *Reader) acknowledge() {
