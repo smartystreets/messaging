@@ -23,10 +23,12 @@ func NewDialWriter(dialer dialer, network, address string) *DialWriter {
 
 func (this *DialWriter) Write(dispatch messaging.Dispatch) error {
 	if writer, err := this.open(); err != nil {
+		return err
+	} else if err = writer.Write(dispatch); err != nil {
 		this.Close()
 		return err
 	} else {
-		return writer.Write(dispatch)
+		return nil
 	}
 }
 func (this *DialWriter) open() (*Writer, error) {
@@ -48,4 +50,5 @@ func (this *DialWriter) Close() {
 	if current != nil {
 		this.current.Close()
 	}
+	this.current = nil
 }
