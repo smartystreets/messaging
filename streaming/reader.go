@@ -35,23 +35,23 @@ func NewReader(listener net.Listener, capacity int) *Reader {
 }
 
 func (this *Reader) Listen() {
-	go this.acknowledge()
+	go this.discardAcks()
 	for {
 		if socket, err := this.listener.Accept(); err == nil {
-			this.add(socket)
-			go this.parse(socket)
+			this.trackSocket(socket)
+			go this.read(socket)
 		} else if strings.Contains(err.Error(), closedAcceptSocketError) {
 			break
 		}
 	}
 }
 
-func (this *Reader) parse(socket io.ReadCloser) {
-	defer this.remove(socket)
-	for this.read(socket) {
+func (this *Reader) read(socket io.ReadCloser) {
+	defer this.removeFromTracking(socket)
+	for this.parse(socket) {
 	}
 }
-func (this *Reader) read(socket io.Reader) bool {
+func (this *Reader) parse(socket io.Reader) bool {
 	var length uint16 = 0
 	if err := binary.Read(socket, byteOrdering, &length); err != nil {
 		return false
@@ -71,25 +71,25 @@ func (this *Reader) Close() {
 		return // only allow close to be called once
 	}
 
-	this.listener.Close()   // stop incoming traffic
-	this.closeOpenSockets() // FUTURE: we may only want to shut down the listener and not any active streams
-	this.waiter.Wait()      // once all sockets are closed
-	close(this.deliveries)  // no open sockets guarantees = no more sends to this channel
+	this.listener.Close()      // stop incoming traffic
+	this.closeTrackedSockets() // FUTURE: we may only want to shut down the listener and not any active streams
+	this.waiter.Wait()         // once all tracked sockets are closed
+	close(this.deliveries)     // all sockets are no closed = guaranteed no more sends to channel
 }
 
-func (this *Reader) add(socket io.Closer) {
+func (this *Reader) trackSocket(socket io.Closer) {
 	this.waiter.Add(1)
 	this.mutex.Lock()
 	this.tracked[socket] = struct{}{}
 	this.mutex.Unlock()
 }
-func (this *Reader) remove(socket io.Closer) {
+func (this *Reader) removeFromTracking(socket io.Closer) {
 	this.mutex.Lock()
 	delete(this.tracked, socket)
 	this.mutex.Unlock()
 	this.waiter.Done()
 }
-func (this *Reader) closeOpenSockets() {
+func (this *Reader) closeTrackedSockets() {
 	this.mutex.Lock()
 	for socket := range this.tracked {
 		socket.Close()
@@ -97,7 +97,7 @@ func (this *Reader) closeOpenSockets() {
 	this.mutex.Unlock()
 }
 
-func (this *Reader) acknowledge() {
+func (this *Reader) discardAcks() {
 	for range this.acknowledgements {
 	}
 }
