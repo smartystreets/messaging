@@ -1,10 +1,13 @@
 package streaming
 
 import (
+	"encoding/binary"
+	"io"
 	"net"
+	"strings"
 	"sync"
-	"time"
 
+	"github.com/smartystreets/clock"
 	"github.com/smartystreets/messaging"
 )
 
@@ -12,8 +15,10 @@ type Reader struct {
 	listener         net.Listener
 	deliveries       chan messaging.Delivery
 	acknowledgements chan interface{}
-	sockets          []*parser
+	open             map[io.Closer]struct{}
 	waiter           *sync.WaitGroup
+	mutex            *sync.Mutex
+	clock            *clock.Clock
 }
 
 func NewReader(listener net.Listener, capacity int) *Reader {
@@ -21,44 +26,70 @@ func NewReader(listener net.Listener, capacity int) *Reader {
 		listener:         listener,
 		acknowledgements: make(chan interface{}, capacity),
 		deliveries:       make(chan messaging.Delivery, capacity),
+		open:             make(map[io.Closer]struct{}),
 		waiter:           &sync.WaitGroup{},
+		mutex:            &sync.Mutex{},
 	}
 }
 
 func (this *Reader) Listen() {
 	go this.acknowledge()
-	this.listen()
-	this.waiter.Wait()
-	close(this.deliveries)
-}
-func (this *Reader) listen() {
-	for this.handle(this.listener.Accept()) {
+	for {
+		if socket, err := this.listener.Accept(); err == nil {
+			this.add(socket)
+			go this.parse(socket)
+		} else if strings.Contains(err.Error(), closedAcceptSocketError) {
+			break
+		}
 	}
 }
-func (this *Reader) handle(socket net.Conn, err error) bool {
-	if err != nil {
-		return false // TODO: depending upon the type of error, e.g. the bind is closed, break
+
+func (this *Reader) parse(socket io.ReadCloser) {
+	for this.read(socket) {
+	}
+	this.remove(socket)
+}
+func (this *Reader) read(socket io.Reader) bool {
+	var length uint16 = 0
+	if err := binary.Read(socket, byteOrdering, &length); err != nil {
+		return false
+	} else if length == 0 {
+		return true
 	}
 
-	parser := newParser(socket, this.deliveries, readDeadline)
-	this.sockets = append(this.sockets, parser)
-	this.waiter.Add(1)
-	go this.parse(parser)
-	return true
-}
-func (this *Reader) parse(parser *parser) {
-	parser.Parse()
-	this.waiter.Done()
+	buffer := make([]byte, length)
+	if _, err := io.ReadFull(socket, buffer); err != nil {
+		return false
+	} else {
+		this.deliveries <- messaging.Delivery{Timestamp: this.clock.UTCNow(), Payload: buffer}
+		return true
+	}
 }
 
 func (this *Reader) Close() {
-	this.listener.Close()
+	this.listener.Close() // stop incoming traffic
 
-	for _, socket := range this.sockets {
+	this.mutex.Lock()
+	for socket := range this.open {
 		socket.Close()
 	}
+	this.mutex.Unlock()
 
-	this.sockets = nil
+	this.waiter.Wait()
+	close(this.deliveries)
+}
+
+func (this *Reader) add(socket io.Closer) {
+	this.waiter.Add(1)
+	this.mutex.Lock()
+	this.open[socket] = struct{}{}
+	this.mutex.Unlock()
+}
+func (this *Reader) remove(socket io.Closer) {
+	this.mutex.Lock()
+	delete(this.open, socket)
+	this.mutex.Unlock()
+	this.waiter.Done()
 }
 
 func (this *Reader) acknowledge() {
@@ -69,4 +100,6 @@ func (this *Reader) acknowledge() {
 func (this *Reader) Deliveries() <-chan messaging.Delivery { return this.deliveries }
 func (this *Reader) Acknowledgements() chan<- interface{}  { return this.acknowledgements }
 
-const readDeadline = time.Second
+// https://github.com/golang/go/issues/4373
+// https://github.com/golang/go/issues/19252
+const closedAcceptSocketError = "use of closed network connection"
