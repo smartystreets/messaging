@@ -1,5 +1,7 @@
 package messaging
 
+import "time"
+
 type RetryWriter struct {
 	inner Writer
 	max   uint64
@@ -7,11 +9,14 @@ type RetryWriter struct {
 }
 
 func NewRetryWriter(inner Writer, options ...RetryWriterOption) *RetryWriter {
-	this := &RetryWriter{inner: inner, max: 0xFFFFFFFFFFFFFFFF, sleep: func(uint64) {}}
+	this := &RetryWriter{inner: inner, max: 0xFFFFFFFFFFFFFFFF, sleep: defaultSleep}
 	for _, option := range options {
 		option(this)
 	}
 	return this
+}
+func defaultSleep(_ uint64) {
+	time.Sleep(time.Second)
 }
 
 func (this *RetryWriter) Write(message Dispatch) (err error) {
