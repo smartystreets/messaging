@@ -42,6 +42,8 @@ func (this *Writer) Close() {
 }
 
 const maxFrameSize = 64*1024 - 2
-var byteOrdering = binary.LittleEndian
 
-var payloadTooLarge = errors.New("payload is too large")
+var (
+	payloadTooLarge = errors.New("payload is too large")
+	byteOrdering    = binary.LittleEndian
+)
