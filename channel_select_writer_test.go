@@ -52,7 +52,7 @@ func (this *ChannelSelectWriterFixture) TestEmptyBuffersNeverReachInnerWriter() 
 func (this *ChannelSelectWriterFixture) TestWritesWhichOverflowChannelAreDiscarded() {
 	this.writer.Write(Dispatch{Payload: []byte("a")})
 	this.writer.Write(Dispatch{Payload: []byte("b")})
-	
+
 	err := this.writer.Write(Dispatch{Payload: []byte("c")})
 
 	this.So(err, should.Equal, WriteDiscardedError)
