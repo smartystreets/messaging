@@ -84,7 +84,7 @@ func (this *Reader) trackSocket(socket io.Closer) {
 	this.mutex.Unlock()
 }
 func (this *Reader) removeFromTracking(socket io.Closer) {
-	socket.Close()
+	defer socket.Close()
 	this.mutex.Lock()
 	delete(this.tracked, socket)
 	this.mutex.Unlock()
