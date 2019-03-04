@@ -64,10 +64,16 @@ func (this *Channel) AcknowledgeMultipleMessages(deliveryTag uint64) error {
 }
 
 func (this *Channel) PublishMessage(destination string, message amqp.Publishing) error {
-	if strings.HasPrefix(destination, "@") {
-		return this.inner.Publish("", destination[1:], false, false, message)
+	exchange, routingKey := splitDestination(destination)
+	return this.inner.Publish(exchange, routingKey, false, false, message)
+}
+func splitDestination(destination string) (string, string) {
+	if index := strings.Index(destination, "@"); index == 0 {
+		return "", destination[1:] // TODO: is this path still used?
+	} else if index > 0 {
+		return destination[index+1:], destination[0:index] // routing-key@exchange
 	} else {
-		return this.inner.Publish(destination, "", false, false, message)
+		return destination, "" // exchange only
 	}
 }
 
