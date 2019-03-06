@@ -32,6 +32,7 @@ func (this *TransactionWriterFixture) Setup() {
 func (this *TransactionWriterFixture) TestDispatchIsWrittenToChannel() {
 	dispatch := messaging.Dispatch{
 		Destination: "destination",
+		Partition:   "partition",
 		Payload:     []byte{1, 2, 3, 4, 5},
 	}
 
@@ -39,6 +40,7 @@ func (this *TransactionWriterFixture) TestDispatchIsWrittenToChannel() {
 
 	this.So(err, should.BeNil)
 	this.So(this.controller.channel.exchange, should.Equal, dispatch.Destination)
+	this.So(this.controller.channel.partition, should.Equal, dispatch.Partition)
 	this.So(this.controller.channel.dispatch.Body, should.Resemble, dispatch.Payload)
 	this.So(this.controller.channel.transactional, should.BeTrue)
 }

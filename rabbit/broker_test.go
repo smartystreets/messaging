@@ -400,14 +400,14 @@ func (this *FakeChannel) ExclusiveConsumeWithoutAcknowledgement(string, string) 
 	return nil, nil
 }
 
-func (this *FakeChannel) CancelConsumer(string) error                  { return nil }
-func (this *FakeChannel) Close() error                                 { return nil }
-func (this *FakeChannel) AcknowledgeSingleMessage(uint64) error        { return nil }
-func (this *FakeChannel) AcknowledgeMultipleMessages(uint64) error     { return nil }
-func (this *FakeChannel) ConfigureChannelAsTransactional() error       { return nil }
-func (this *FakeChannel) PublishMessage(string, amqp.Publishing) error { return nil }
-func (this *FakeChannel) CommitTransaction() error                     { return nil }
-func (this *FakeChannel) RollbackTransaction() error                   { return nil }
+func (this *FakeChannel) CancelConsumer(string) error                          { return nil }
+func (this *FakeChannel) Close() error                                         { return nil }
+func (this *FakeChannel) AcknowledgeSingleMessage(uint64) error                { return nil }
+func (this *FakeChannel) AcknowledgeMultipleMessages(uint64) error             { return nil }
+func (this *FakeChannel) ConfigureChannelAsTransactional() error               { return nil }
+func (this *FakeChannel) PublishMessage(string, string, amqp.Publishing) error { return nil }
+func (this *FakeChannel) CommitTransaction() error                             { return nil }
+func (this *FakeChannel) RollbackTransaction() error                           { return nil }
 
 ////////////////////////////////////////////////////////
 

@@ -205,7 +205,7 @@ func (this *FakeReaderChannel) AcknowledgeMultipleMessages(value uint64) error {
 	this.latestTag = value
 	return nil
 }
-func (this *FakeReaderChannel) ConfigureChannelAsTransactional() error       { return nil }
-func (this *FakeReaderChannel) PublishMessage(string, amqp.Publishing) error { return nil }
-func (this *FakeReaderChannel) CommitTransaction() error                     { return nil }
-func (this *FakeReaderChannel) RollbackTransaction() error                   { return nil }
+func (this *FakeReaderChannel) ConfigureChannelAsTransactional() error               { return nil }
+func (this *FakeReaderChannel) PublishMessage(string, string, amqp.Publishing) error { return nil }
+func (this *FakeReaderChannel) CommitTransaction() error                             { return nil }
+func (this *FakeReaderChannel) RollbackTransaction() error                           { return nil }

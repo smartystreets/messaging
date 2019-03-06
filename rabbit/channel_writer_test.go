@@ -31,6 +31,7 @@ func (this *ChannelWriterFixture) Setup() {
 func (this *ChannelWriterFixture) TestDispatchIsWrittenToChannel() {
 	dispatch := messaging.Dispatch{
 		Destination: "destination",
+		Partition:   "partition",
 		Payload:     []byte{1, 2, 3, 4, 5},
 	}
 
@@ -38,6 +39,7 @@ func (this *ChannelWriterFixture) TestDispatchIsWrittenToChannel() {
 
 	this.So(err, should.BeNil)
 	this.So(this.controller.channel.exchange, should.Equal, dispatch.Destination)
+	this.So(this.controller.channel.partition, should.Equal, dispatch.Partition)
 	this.So(this.controller.channel.dispatch.Body, should.Resemble, dispatch.Payload)
 	this.So(this.controller.channel.transactional, should.BeFalse)
 }
@@ -111,6 +113,7 @@ type FakeWriterChannel struct {
 	commits       int
 	writes        int
 	exchange      string
+	partition     string
 	dispatch      amqp.Publishing
 	transactional bool
 	err           error
@@ -146,8 +149,9 @@ func (this *FakeWriterChannel) ConfigureChannelAsTransactional() error {
 	this.transactional = true
 	return nil
 }
-func (this *FakeWriterChannel) PublishMessage(destination string, dispatch amqp.Publishing) error {
+func (this *FakeWriterChannel) PublishMessage(destination, partition string, dispatch amqp.Publishing) error {
 	this.exchange = destination
+	this.partition = partition
 	this.dispatch = dispatch
 	this.writes++
 	return this.err

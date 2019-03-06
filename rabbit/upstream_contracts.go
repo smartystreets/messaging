@@ -47,7 +47,7 @@ type Acknowledger interface {
 type Publisher interface {
 	ConfigureChannelAsTransactional() error
 
-	PublishMessage(string, amqp.Publishing) error
+	PublishMessage(string, string, amqp.Publishing) error
 
 	CommitTransaction() error
 	RollbackTransaction() error

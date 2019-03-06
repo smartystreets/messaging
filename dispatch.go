@@ -6,6 +6,7 @@ type Dispatch struct {
 	SourceID        uint64
 	MessageID       uint64
 	Destination     string
+	Partition       string
 	MessageType     string
 	ContentType     string
 	ContentEncoding string

@@ -33,7 +33,7 @@ func (this *TransactionWriter) Write(message messaging.Dispatch) error {
 	// until we reset the channel during commit
 	// opening a new channel is what marks it as able to continue
 	dispatch := toAMQPDispatch(message, clock.UTCNow())
-	return this.channel.PublishMessage(message.Destination, dispatch)
+	return this.channel.PublishMessage(message.Destination, message.Partition, dispatch)
 }
 
 func (this *TransactionWriter) Commit() error {

@@ -63,18 +63,21 @@ func (this *Channel) AcknowledgeMultipleMessages(deliveryTag uint64) error {
 	return this.inner.Ack(deliveryTag, true)
 }
 
-func (this *Channel) PublishMessage(destination string, message amqp.Publishing) error {
+func (this *Channel) PublishMessage(destination, partition string, message amqp.Publishing) error {
 	exchange, routingKey := parseDestination(destination)
-	return this.inner.Publish(exchange, routingKey, false, false, message)
+	if len(routingKey) > 0 {
+		// use the routing key from the destination if it exists; although this is likely an unused path
+		partition = routingKey
+	}
+
+	return this.inner.Publish(exchange, partition, false, false, message)
 }
 func parseDestination(destination string) (string, string) {
-	if index := strings.Index(destination, "@"); index == 0 {
+	if strings.HasPrefix(destination, "@") {
 		log.Printf("[INFO] Routing message with routing key [%s].", destination)
 		return "", destination[1:]
-	} else if index > 0 {
-		return destination[index+1:], destination[0:index] // routing-key@exchange
 	} else {
-		return destination, "" // exchange only
+		return destination, ""
 	}
 }
 
