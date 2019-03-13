@@ -26,7 +26,7 @@ func (this *DispatchWriterFixture) Setup() {
 	this.writer = NewDispatchWriter(this.inner, NewReflectionDiscovery("prefix."))
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestCloseInvokesInnerWriterClose() {
 	this.writer.Close()
@@ -34,20 +34,21 @@ func (this *DispatchWriterFixture) TestCloseInvokesInnerWriterClose() {
 	this.So(this.inner.closed, should.Equal, 1)
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestWriteUsingDefaults() {
-	this.writer.Write(Dispatch{Message: "Hello, World!"})
+	this.writer.Write(Dispatch{Message: "Hello, World!", Partition: "123"})
 
 	this.So(this.inner.written, should.Resemble, []Dispatch{{
 		Destination: "prefix-string",
 		MessageType: "prefix.string",
+		Partition:   "123",
 		Durable:     true,
 		Message:     "Hello, World!",
 	}})
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestWriteUsingCustomTemplate() {
 	this.writer.RegisterTemplate(Dispatch{
@@ -61,12 +62,13 @@ func (this *DispatchWriterFixture) TestWriteUsingCustomTemplate() {
 		Expiration:      time.Second * 7,
 	})
 
-	this.writer.Write(Dispatch{Message: "Hello, World!"})
+	this.writer.Write(Dispatch{Message: "Hello, World!", Partition: "123"})
 
 	this.So(this.inner.written, should.Resemble, []Dispatch{{
 		MessageID:       1,
 		SourceID:        2,
 		Destination:     "prefix-string",
+		Partition:       "123",
 		MessageType:     "prefix.string",
 		ContentType:     "5",
 		ContentEncoding: "6",
@@ -77,14 +79,14 @@ func (this *DispatchWriterFixture) TestWriteUsingCustomTemplate() {
 	this.So(this.writer.template.Message, should.BeNil)
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestTypeDiscoverErrorsAreReturned() {
 	err := this.writer.Write(Dispatch{Message: nil})
 	this.So(err, should.Equal, MessageTypeDiscoveryError)
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestWriteReturnsInnerError() {
 	this.inner.writeError = errors.New("returned to caller")
@@ -94,7 +96,7 @@ func (this *DispatchWriterFixture) TestWriteReturnsInnerError() {
 	this.So(err, should.Equal, this.inner.writeError)
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestWriteUsesOverrideTableWhenAvailable() {
 	applicationMessage := "Hello, World!"
@@ -125,7 +127,7 @@ func (this *DispatchWriterFixture) TestWriteUsesOverrideTableWhenAvailable() {
 	this.So(this.writer.overrides[reflect.TypeOf(0)].Message, should.BeNil)
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestWriterWithoutCommitShouldReturnNoErrors() {
 	this.writer = NewDispatchWriter(nil, nil)
@@ -135,7 +137,7 @@ func (this *DispatchWriterFixture) TestWriterWithoutCommitShouldReturnNoErrors()
 	this.So(err, should.BeNil)
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestCommitCallsInnerCommit() {
 	this.inner.commitError = errors.New("returned to caller")
@@ -146,7 +148,7 @@ func (this *DispatchWriterFixture) TestCommitCallsInnerCommit() {
 	this.So(this.inner.committed, should.Equal, 1)
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 type FakeDispatchWriter struct {
 	writeError  error
