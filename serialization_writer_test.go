@@ -19,30 +19,28 @@ type SerializationWriterFixture struct {
 	writer     *SerializationWriter
 	inner      *FakeCommitWriter
 	serializer *FakeSerializer
-	discovery  *FakeDiscovery
 }
 
 func (this *SerializationWriterFixture) Setup() {
 	this.inner = &FakeCommitWriter{}
 	this.serializer = &FakeSerializer{}
-	this.discovery = &FakeDiscovery{}
 	this.buildWriter()
 }
 
 func (this *SerializationWriterFixture) buildWriter() {
-	this.writer = NewSerializationWriter(this.inner, this.serializer, this.discovery)
+	this.writer = NewSerializationWriter(this.inner, this.serializer)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func (this *SerializationWriterFixture) TestWriterAddsSerializedPayloadAndTypesToDispatch() {
+func (this *SerializationWriterFixture) TestWriterAddsSerializedPayload() {
 	this.inner.writeError = errors.New("ensure inner errors are returned to caller")
 
 	original := Dispatch{
 		SourceID:        1,
 		MessageID:       2,
 		Destination:     "3",
-		MessageType:     "", // will be populated
+		MessageType:     "",
 		ContentType:     "", // will be populated
 		ContentEncoding: "", // will be populated
 		Durable:         true,
@@ -59,7 +57,7 @@ func (this *SerializationWriterFixture) TestWriterAddsSerializedPayloadAndTypesT
 		SourceID:        1,
 		MessageID:       2,
 		Destination:     "3",
-		MessageType:     "message.type.discovered",
+		MessageType:     "",
 		ContentType:     "application/serialized-type",
 		ContentEncoding: "serialized-encoding",
 		Durable:         true,
@@ -95,44 +93,9 @@ func (this *SerializationWriterFixture) TestDispatchAlreadyContainsSerializedPay
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func (this *SerializationWriterFixture) TestDispatchAlreadyContainsMessageType() {
-	message := Dispatch{
-		MessageType: "untouched",
-		Message:     TestMessage{},
-	}
-	this.writer.Write(message)
-	this.So(this.inner.written, should.Resemble, []Dispatch{Dispatch{
-		MessageType:     "untouched",
-		Payload:         testSerializedPayload,
-		Message:         TestMessage{},
-		ContentType:     this.serializer.ContentType(),
-		ContentEncoding: this.serializer.ContentEncoding(),
-	}})
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-func (this *SerializationWriterFixture) TestMessageTypeDiscoveryErrorsReturned() {
-	this.discovery.discoveryError = errors.New("discovery error")
-	message := Dispatch{Message: TestMessage{}}
-	err := this.writer.Write(message)
-	this.So(err, should.Equal, this.discovery.discoveryError)
-	this.So(this.inner.written, should.BeEmpty)
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 func (this *SerializationWriterFixture) TestWriteEmptyDispatch() {
 	err := this.writer.Write(Dispatch{})
 	this.So(err, should.Equal, EmptyDispatchError)
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-func (this *SerializationWriterFixture) TestWriteEmptyMessageType() {
-	err := this.writer.Write(Dispatch{Payload: []byte("already serialized")})
-	this.So(err, should.Equal, MessageTypeDiscoveryError)
-	this.So(this.inner.written, should.BeEmpty)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -147,7 +110,7 @@ func (this *SerializationWriterFixture) TestCommitInvokesUnderlyingWriter() {
 ////////////////////////////////////////////////////////////////////////////////
 
 func (this *SerializationWriterFixture) TestCommitOnRegularWriterPanics() {
-	this.writer = NewSerializationWriter(&FakeWriter{}, this.serializer, this.discovery)
+	this.writer = NewSerializationWriter(&FakeWriter{}, this.serializer)
 	err := this.writer.Commit()
 	this.So(err, should.BeNil)
 }
@@ -210,20 +173,6 @@ func (this *FakeSerializer) ContentType() string     { return "application/seria
 func (this *FakeSerializer) ContentEncoding() string { return "serialized-encoding" }
 
 var testSerializedPayload = []byte("serializer called successfully")
-
-////////////////////////////////////////////////////////////////////////////////
-
-type FakeDiscovery struct {
-	discoveryError error
-}
-
-func (this *FakeDiscovery) Discover(instance interface{}) (string, string, error) {
-	if this.discoveryError == nil {
-		return "message.type.discovered", "", nil
-	} else {
-		return "", "", this.discoveryError
-	}
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -4,34 +4,26 @@ type SerializationWriter struct {
 	writer          Writer
 	commitWriter    CommitWriter
 	serializer      Serializer
-	discovery       TypeDiscovery
 	contentType     string
 	contentEncoding string
 }
 
-func NewSerializationWriter(inner Writer, serializer Serializer, discovery TypeDiscovery) *SerializationWriter {
+func NewSerializationWriter(inner Writer, serializer Serializer) *SerializationWriter {
 	commitWriter, _ := inner.(CommitWriter)
 	return &SerializationWriter{
 		writer:          inner,
 		commitWriter:    commitWriter,
 		serializer:      serializer,
-		discovery:       discovery,
 		contentType:     serializer.ContentType(),
 		contentEncoding: serializer.ContentEncoding(),
 	}
 }
 
 func (this *SerializationWriter) Write(dispatch Dispatch) error {
-	if len(dispatch.Payload) > 0 && len(dispatch.MessageType) > 0 {
+	if len(dispatch.Payload) > 0 {
 		return this.writer.Write(dispatch) // already have a payload a message type, forward to inner
-	}
-
-	if len(dispatch.Payload) == 0 && dispatch.Message == nil {
+	} else if dispatch.Message == nil {
 		return EmptyDispatchError // no payload and no message, this is a total fail
-	}
-
-	if dispatch.Message == nil && len(dispatch.MessageType) == 0 {
-		return MessageTypeDiscoveryError // no message type and no way to get it
 	}
 
 	if payload, err := this.serializer.Serialize(dispatch.Message); err != nil {
@@ -42,16 +34,6 @@ func (this *SerializationWriter) Write(dispatch Dispatch) error {
 		dispatch.Payload = payload
 	}
 
-	if len(dispatch.MessageType) > 0 {
-		return this.writer.Write(dispatch) // message type already exists, no need to discover
-	}
-
-	messageType, _, err := this.discovery.Discover(dispatch.Message)
-	if err != nil {
-		return err
-	}
-
-	dispatch.MessageType = messageType
 	return this.writer.Write(dispatch)
 }
 
