@@ -22,7 +22,6 @@ func (this *DispatchWriter) Write(item Dispatch) error {
 	} else {
 		item.MessageType = messageType
 		item.Destination = destination
-		item.Durable = true // TODO: for now
 		return this.writer.Write(item)
 	}
 }
