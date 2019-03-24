@@ -46,7 +46,7 @@ func (this *SerializationWriter) Write(dispatch Dispatch) error {
 		return this.writer.Write(dispatch) // message type already exists, no need to discover
 	}
 
-	messageType, err := this.discovery.Discover(dispatch.Message)
+	messageType, _, err := this.discovery.Discover(dispatch.Message)
 	if err != nil {
 		return err
 	}

@@ -38,5 +38,5 @@ type Serializer interface {
 }
 
 type TypeDiscovery interface {
-	Discover(interface{}) (string, error)
+	Discover(interface{}) (string, string, error)
 }

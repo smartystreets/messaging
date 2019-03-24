@@ -2,7 +2,6 @@ package messaging
 
 import (
 	"reflect"
-	"strings"
 )
 
 type DispatchWriter struct {
@@ -42,19 +41,16 @@ func (this *DispatchWriter) Write(item Dispatch) error {
 	return this.writeUsingTemplate(item.Message, item.Partition)
 }
 func (this *DispatchWriter) writeUsingTemplate(message interface{}, partition string) error {
-	if discovered, err := this.discovery.Discover(message); err != nil {
+	if messageType, destination, err := this.discovery.Discover(message); err != nil {
 		return err
 	} else {
-		return this.writeUsingMessageType(message, discovered, partition)
+		target := this.template
+		target.Message = message
+		target.MessageType = messageType
+		target.Partition = partition
+		target.Destination = destination
+		return this.writer.Write(target)
 	}
-}
-func (this *DispatchWriter) writeUsingMessageType(message interface{}, messageType, partition string) error {
-	target := this.template
-	target.Message = message
-	target.MessageType = messageType
-	target.Partition = partition
-	target.Destination = strings.Replace(target.MessageType, ".", "-", -1)
-	return this.writer.Write(target)
 }
 
 func (this *DispatchWriter) Commit() error {

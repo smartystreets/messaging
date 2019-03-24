@@ -217,11 +217,11 @@ type FakeDiscovery struct {
 	discoveryError error
 }
 
-func (this *FakeDiscovery) Discover(instance interface{}) (string, error) {
+func (this *FakeDiscovery) Discover(instance interface{}) (string, string, error) {
 	if this.discoveryError == nil {
-		return "message.type.discovered", nil
+		return "message.type.discovered", "", nil
 	} else {
-		return "", this.discoveryError
+		return "", "", this.discoveryError
 	}
 }
 
