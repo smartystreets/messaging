@@ -44,7 +44,7 @@ func (this *RetryCommitWriterFixture) TestNoErrorsNoRetries() {
 	dispatches := []Dispatch{{}, {}, {}}
 
 	for _, item := range dispatches {
-		this.writer.Write(item)
+		_ = this.writer.Write(item)
 	}
 
 	err := this.writer.Commit()
@@ -66,7 +66,7 @@ func (this *RetryCommitWriterFixture) TestRetryUntilNoErrors() {
 	dispatches := []Dispatch{{}, {}, {}}
 
 	for _, item := range dispatches {
-		this.writer.Write(item)
+		_ = this.writer.Write(item)
 	}
 
 	err := this.writer.Commit()
@@ -91,7 +91,7 @@ func (this *RetryCommitWriterFixture) TestRetryUntilClosed() {
 	this.writer.Close()
 
 	for _, item := range dispatches {
-		this.writer.Write(item)
+		_ = this.writer.Write(item)
 	}
 
 	err := this.writer.Commit()

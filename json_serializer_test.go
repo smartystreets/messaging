@@ -51,7 +51,7 @@ func (this *JSONSerializerFixture) TestContentEncoding() {
 func (this *JSONSerializerFixture) TestSerializationFailsAndPanics() {
 	this.serializer.PanicWhenSerializationFails()
 	message := InvalidMessage{Stuff: make(chan int, 4)}
-	this.So(func() { this.serializer.Serialize(message) }, should.Panic)
+	this.So(func() { _, _ = this.serializer.Serialize(message) }, should.Panic)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

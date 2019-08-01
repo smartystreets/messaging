@@ -36,7 +36,7 @@ func (this *DispatchWriterFixture) TestCloseInvokesInnerWriterClose() {
 // /////////////////////////////////////////////////////////////////////////////
 
 func (this *DispatchWriterFixture) TestWriteUsingDefaults() {
-	this.writer.Write(Dispatch{Message: "Hello, World!", Partition: "123"})
+	_ = this.writer.Write(Dispatch{Message: "Hello, World!", Partition: "123"})
 
 	this.So(this.inner.written, should.Resemble, []Dispatch{{
 		Destination: "prefix-string",

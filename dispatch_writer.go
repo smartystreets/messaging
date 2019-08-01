@@ -17,13 +17,14 @@ func NewDispatchWriter(writer Writer, discovery TypeDiscovery) *DispatchWriter {
 }
 
 func (this *DispatchWriter) Write(item Dispatch) error {
-	if messageType, destination, err := this.discovery.Discover(item.Message); err != nil {
+	messageType, destination, err := this.discovery.Discover(item.Message)
+	if err != nil {
 		return err
-	} else {
-		item.MessageType = messageType
-		item.Destination = destination
-		return this.writer.Write(item)
 	}
+
+	item.MessageType = messageType
+	item.Destination = destination
+	return this.writer.Write(item)
 }
 
 func (this *DispatchWriter) Commit() error {

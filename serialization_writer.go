@@ -26,14 +26,14 @@ func (this *SerializationWriter) Write(dispatch Dispatch) error {
 		return EmptyDispatchError // no payload and no message, this is a total fail
 	}
 
-	if payload, err := this.serializer.Serialize(dispatch.Message); err != nil {
+	payload, err := this.serializer.Serialize(dispatch.Message)
+	if err != nil {
 		return err // serialization failed
-	} else {
-		dispatch.ContentType = this.contentType
-		dispatch.ContentEncoding = this.contentEncoding
-		dispatch.Payload = payload
 	}
 
+	dispatch.ContentType = this.contentType
+	dispatch.ContentEncoding = this.contentEncoding
+	dispatch.Payload = payload
 	return this.writer.Write(dispatch)
 }
 

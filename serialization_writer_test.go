@@ -164,9 +164,9 @@ func (this *FakeSerializer) Serialize(interface{}) ([]byte, error) {
 	this.called++
 	if this.serializeError != nil {
 		return nil, this.serializeError
-	} else {
-		return testSerializedPayload, nil
 	}
+
+	return testSerializedPayload, nil
 }
 
 func (this *FakeSerializer) ContentType() string     { return "application/serialized-type" }

@@ -35,7 +35,7 @@ func (this *RetryWriterFixture) sleep(value uint64) {
 func (this *RetryWriterFixture) TestDispatchWorksEventually() {
 	dispatch := Dispatch{Destination: "destination"}
 
-	this.writer.Write(dispatch)
+	_ = this.writer.Write(dispatch)
 
 	this.So(this.sleepInput, should.Equal, 41)
 	this.So(this.sleeps, should.Equal, 42)

@@ -17,7 +17,7 @@ func NewChannelSelectWriter(writer Writer, options ...ChannelSelectWriterOption)
 
 func (this *ChannelSelectWriter) Listen() {
 	for buffer := range this.input {
-		this.inner.Write(buffer)
+		_ = this.inner.Write(buffer)
 	}
 }
 
