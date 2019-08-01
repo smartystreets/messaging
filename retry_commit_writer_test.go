@@ -41,7 +41,7 @@ func (this *RetryCommitWriterFixture) sleep(value uint64) {
 
 func (this *RetryCommitWriterFixture) TestNoErrorsNoRetries() {
 	this.inner.errorsUntil = 0
-	dispatches := []Dispatch{Dispatch{}, Dispatch{}, Dispatch{}}
+	dispatches := []Dispatch{{}, {}, {}}
 
 	for _, item := range dispatches {
 		this.writer.Write(item)
@@ -63,7 +63,7 @@ func (this *RetryCommitWriterFixture) TestNoErrorsNoRetries() {
 
 func (this *RetryCommitWriterFixture) TestRetryUntilNoErrors() {
 	this.inner.errorsUntil = 2
-	dispatches := []Dispatch{Dispatch{}, Dispatch{}, Dispatch{}}
+	dispatches := []Dispatch{{}, {}, {}}
 
 	for _, item := range dispatches {
 		this.writer.Write(item)
@@ -87,7 +87,7 @@ func (this *RetryCommitWriterFixture) TestRetryUntilNoErrors() {
 ///////////////////////////////////////////////////////////////
 
 func (this *RetryCommitWriterFixture) TestRetryUntilClosed() {
-	dispatches := []Dispatch{Dispatch{}, Dispatch{}, Dispatch{}}
+	dispatches := []Dispatch{{}, {}, {}}
 	this.writer.Close()
 
 	for _, item := range dispatches {
