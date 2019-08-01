@@ -51,7 +51,7 @@ func (this *DispatchWriterFixture) TestWriteUsingDefaults() {
 
 func (this *DispatchWriterFixture) TestTypeDiscoverErrorsAreReturned() {
 	err := this.writer.Write(Dispatch{Message: nil})
-	this.So(err, should.Equal, MessageTypeDiscoveryError)
+	this.So(err, should.Equal, ErrMessageTypeDiscovery)
 }
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -89,7 +89,7 @@ func (this *DispatchWriterFixture) TestCommitCallsInnerCommit() {
 
 func (this *DispatchWriterFixture) Discover(message interface{}) (typeName string, destination string, err error) {
 	if message == nil {
-		return "", "", MessageTypeDiscoveryError
+		return "", "", ErrMessageTypeDiscovery
 	}
 	return "prefix." + reflect.TypeOf(message).Name(), "prefix-" + reflect.TypeOf(message).Name(), nil
 }

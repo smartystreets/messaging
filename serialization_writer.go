@@ -23,7 +23,7 @@ func (this *SerializationWriter) Write(dispatch Dispatch) error {
 	if len(dispatch.Payload) > 0 {
 		return this.writer.Write(dispatch) // already have a payload a message type, forward to inner
 	} else if dispatch.Message == nil {
-		return EmptyDispatchError // no payload and no message, this is a total fail
+		return ErrEmptyDispatch // no payload and no message, this is a total fail
 	}
 
 	payload, err := this.serializer.Serialize(dispatch.Message)

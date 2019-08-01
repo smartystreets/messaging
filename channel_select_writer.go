@@ -30,7 +30,7 @@ func (this *ChannelSelectWriter) Write(dispatch Dispatch) error {
 	case this.input <- dispatch:
 		return nil
 	default:
-		return WriteDiscardedError
+		return ErrWriteDiscarded
 	}
 }
 
@@ -38,7 +38,7 @@ func (this *ChannelSelectWriter) Close() {
 	this.inner.Close()
 }
 
-var WriteDiscardedError = errors.New("the write was discarded because the channel was full")
+var ErrWriteDiscarded = errors.New("the write was discarded because the channel was full")
 
 const defaultChannelCapacity = 4096
 

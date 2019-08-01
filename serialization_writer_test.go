@@ -95,7 +95,7 @@ func (this *SerializationWriterFixture) TestDispatchAlreadyContainsSerializedPay
 
 func (this *SerializationWriterFixture) TestWriteEmptyDispatch() {
 	err := this.writer.Write(Dispatch{})
-	this.So(err, should.Equal, EmptyDispatchError)
+	this.So(err, should.Equal, ErrEmptyDispatch)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

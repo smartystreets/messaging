@@ -55,7 +55,7 @@ func (this *ChannelSelectWriterFixture) TestWritesWhichOverflowChannelAreDiscard
 
 	err := this.writer.Write(Dispatch{Payload: []byte("c")})
 
-	this.So(err, should.Equal, WriteDiscardedError)
+	this.So(err, should.Equal, ErrWriteDiscarded)
 }
 
 //////////////////////////////////////////////////////////////////////////

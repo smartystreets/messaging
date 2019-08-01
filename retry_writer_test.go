@@ -56,7 +56,7 @@ func (this *RetryWriterFixture) TestClosedAbortsRetry() {
 	this.So(this.inner.written, should.NotResemble, dispatch)
 	this.So(this.inner.closed, should.Equal, 1)
 	this.So(this.inner.closed, should.Equal, 1)
-	this.So(err, should.Equal, WriterClosedError)
+	this.So(err, should.Equal, ErrWriterClosed)
 }
 
 ///////////////////////////////////////////////////////////////
@@ -72,7 +72,7 @@ func (this *FakeRetryWriter) Write(message Dispatch) error {
 	this.writes++
 
 	if this.closed > 0 {
-		return WriterClosedError
+		return ErrWriterClosed
 	}
 
 	if this.errorUntil >= this.writes {

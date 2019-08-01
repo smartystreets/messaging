@@ -36,7 +36,7 @@ func (this *RetryCommitWriter) Commit() (err error) {
 			this.success(i)
 			this.buffer = this.buffer[0:0]
 			return nil
-		} else if err == WriterClosedError {
+		} else if err == ErrWriterClosed {
 			return err
 		}
 
@@ -47,8 +47,8 @@ func (this *RetryCommitWriter) Commit() (err error) {
 }
 func (this *RetryCommitWriter) try() error {
 	for _, item := range this.buffer {
-		if this.inner.Write(item) == WriterClosedError {
-			return WriterClosedError
+		if this.inner.Write(item) == ErrWriterClosed {
+			return ErrWriterClosed
 		}
 	}
 

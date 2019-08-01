@@ -23,7 +23,7 @@ func (this *RetryWriter) Write(message Dispatch) (err error) {
 	for i := uint64(0); i < this.max; i++ {
 		if err = this.inner.Write(message); err == nil {
 			break
-		} else if err == WriterClosedError {
+		} else if err == ErrWriterClosed {
 			break
 		} else {
 			this.sleep(i)

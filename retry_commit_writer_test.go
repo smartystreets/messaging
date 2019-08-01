@@ -96,7 +96,7 @@ func (this *RetryCommitWriterFixture) TestRetryUntilClosed() {
 
 	err := this.writer.Commit()
 
-	this.So(err, should.Equal, WriterClosedError)
+	this.So(err, should.Equal, ErrWriterClosed)
 	this.So(this.inner.written, should.Resemble, dispatches[0:1])
 	this.So(this.inner.writes, should.Equal, 1)
 	this.So(this.inner.commits, should.Equal, 0)
@@ -121,7 +121,7 @@ func (this *FakeRetryCommitWriter) Write(message Dispatch) error {
 	this.written = append(this.written, message)
 
 	if this.closed > 0 {
-		return WriterClosedError
+		return ErrWriterClosed
 	} else if this.errorsUntil >= this.commits {
 		return errors.New("general write failure")
 	}
