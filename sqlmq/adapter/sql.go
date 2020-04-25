@@ -23,6 +23,8 @@ func (this sqlDB) BeginTx(ctx context.Context, options *sql.TxOptions) (Transact
 	}
 }
 
+func (this sqlDB) Handle() *sql.DB { return this.DB }
+
 type sqlTx struct{ *sql.Tx }
 
 func (this sqlTx) QueryContext(ctx context.Context, statement string, args ...interface{}) (QueryResult, error) {
@@ -31,3 +33,5 @@ func (this sqlTx) QueryContext(ctx context.Context, statement string, args ...in
 func (this sqlTx) QueryRowContext(ctx context.Context, statement string, args ...interface{}) RowScanner {
 	return this.Tx.QueryRowContext(ctx, statement, args...)
 }
+
+func (this sqlTx) Handle() *sql.Tx { return this.Tx }
