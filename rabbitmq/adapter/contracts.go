@@ -31,14 +31,14 @@ type Channel interface {
 	BindQueue(queue, exchange string) error
 
 	BufferSize(value uint16) error
-	Consume(id uint64, queue string) (<-chan amqp.Delivery, error)
-	Acknowledge(deliveryTag uint64, multiple bool) error
-	CancelConsumer(id uint64) error
+	Consume(consumerID, queue string) (<-chan amqp.Delivery, error)
+	Ack(deliveryTag uint64, multiple bool) error
+	CancelConsumer(consumerID string) error
 
 	Publish(exchange, key string, envelope amqp.Publishing) error
-	Transactional() error
-	Commit() error
-	Rollback() error
+	Tx() error
+	TxCommit() error
+	TxRollback() error
 
 	io.Closer
 }
