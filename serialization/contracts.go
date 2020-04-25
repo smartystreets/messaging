@@ -7,10 +7,12 @@ import (
 )
 
 type Serializer interface {
-	Serialize(source interface{}) ([]byte, error)
+	ContentType() string
+	Serialize(instance interface{}) ([]byte, error)
 }
 type Deserializer interface {
-	Deserialize(source []byte, target interface{}) error
+	ContentType() string
+	Deserialize(source []byte, instance interface{}) error
 }
 
 type DeliveryDecoder interface {

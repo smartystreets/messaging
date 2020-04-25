@@ -14,7 +14,6 @@ func TestSerializerFixture(t *testing.T) {
 
 type SerializerFixture struct {
 	*gunit.Fixture
-
 	serializer defaultSerializer
 }
 
@@ -25,6 +24,7 @@ func (this *SerializerFixture) TestSerializeAndDeserialize() {
 	payload, serializeError := this.serializer.Serialize(actual)
 	deserializeError := this.serializer.Deserialize(payload, &expected)
 
+	this.So(this.serializer.ContentType(), should.Equal, "application/json")
 	this.So(serializeError, should.BeNil)
 	this.So(deserializeError, should.BeNil)
 	this.So(expected, should.Equal, actual)

@@ -7,6 +7,8 @@ import (
 
 type defaultSerializer struct{}
 
+func (this defaultSerializer) ContentType() string { return "application/json" }
+
 func (this defaultSerializer) Serialize(source interface{}) ([]byte, error) {
 	if raw, err := json.Marshal(source); err != nil {
 		return nil, fmt.Errorf("%w: [%s]", ErrSerializeUnsupportedType, err)

@@ -5,6 +5,9 @@ import (
 )
 
 type configuration struct {
+	MessageTypes map[reflect.Type]string
+	ReadTypes    map[string]reflect.Type
+
 	Deserializers map[string]Deserializer
-	ReadTypes     map[string]reflect.Type
+	Serializer    Serializer
 }

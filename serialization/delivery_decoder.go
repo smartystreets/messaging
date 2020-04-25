@@ -17,11 +17,7 @@ func newDeliveryDecoder(config configuration) DeliveryDecoder {
 }
 
 func (this defaultDeliveryDecoder) Decode(delivery *messaging.Delivery) error {
-	if len(delivery.Payload) == 0 {
-		return nil
-	}
-
-	if delivery.Message != nil {
+	if len(delivery.Payload) == 0 || delivery.Message != nil {
 		return nil
 	}
 

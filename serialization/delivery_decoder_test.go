@@ -16,10 +16,12 @@ func TestDeliveryDecoderFixture(t *testing.T) {
 
 type DeliveryDecoderFixture struct {
 	*gunit.Fixture
+
 	readTypes     map[string]reflect.Type
 	deserializers map[string]Deserializer
 	delivery      messaging.Delivery
-	decoder       DeliveryDecoder
+
+	decoder DeliveryDecoder
 
 	deserializeCalls    int
 	deserializePayload  []byte
@@ -94,7 +96,7 @@ func (this *DeliveryDecoderFixture) TestWhenDecodingSucceeds_PopulateMessageOnDe
 }
 
 func (this *DeliveryDecoderFixture) TestWhenDeliveryHasNoBody_SkipDecoding() {
-	this.delivery.Payload = []byte{}
+	this.delivery.Payload = nil
 
 	err := this.decoder.Decode(&this.delivery)
 
@@ -104,16 +106,18 @@ func (this *DeliveryDecoderFixture) TestWhenDeliveryHasNoBody_SkipDecoding() {
 }
 
 func (this *DeliveryDecoderFixture) TestWhenDeliveryAlreadyHasMessage_SkipDecoding() {
+	this.delivery.Payload = []byte{0x0}
 	this.delivery.Message = "exists"
 
 	err := this.decoder.Decode(&this.delivery)
-
 
 	this.So(err, should.BeNil)
 	this.So(this.deserializeCalls, should.BeZeroValue)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (this *DeliveryDecoderFixture) ContentType() string { panic("not called") }
 
 func (this *DeliveryDecoderFixture) Deserialize(raw []byte, instance interface{}) error {
 	this.deserializeCalls++
