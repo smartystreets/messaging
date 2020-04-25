@@ -8,15 +8,15 @@ import (
 )
 
 type defaultDispatchEncoder struct {
-	contentType  string
 	messageTypes map[reflect.Type]string
+	contentType  string
 	serializer   Serializer
 }
 
 func newDispatchEncoder(config configuration) DispatchEncoder {
 	return defaultDispatchEncoder{
+		messageTypes: config.WriteTypes,
 		contentType:  config.Serializer.ContentType(),
-		messageTypes: config.MessageTypes,
 		serializer:   config.Serializer,
 	}
 }

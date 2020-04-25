@@ -35,10 +35,9 @@ func (this *DeliveryDecoderFixture) Setup() {
 	this.newDecoder()
 }
 func (this *DeliveryDecoderFixture) newDecoder() {
-	this.decoder = newDeliveryDecoder(configuration{
-		ReadTypes:     this.readTypes,
-		Deserializers: this.deserializers,
-	})
+	config := configuration{Deserializers: this.deserializers}
+	Options.apply(Options.ReadTypes(this.readTypes))(&config)
+	this.decoder = newDeliveryDecoder(config)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

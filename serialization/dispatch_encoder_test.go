@@ -19,7 +19,7 @@ type DispatchEncoderFixture struct {
 
 	encoder DispatchEncoder
 
-	messageTypes      map[reflect.Type]string
+	writeTypes        map[reflect.Type]string
 	dispatch          messaging.Dispatch
 	serializeCalls    int
 	serializeInstance interface{}
@@ -28,11 +28,13 @@ type DispatchEncoderFixture struct {
 }
 
 func (this *DispatchEncoderFixture) Setup() {
-	this.messageTypes = map[reflect.Type]string{}
+	this.writeTypes = map[reflect.Type]string{}
 	this.newEncoder()
 }
 func (this *DispatchEncoderFixture) newEncoder() {
-	this.encoder = newDispatchEncoder(configuration{MessageTypes: this.messageTypes, Serializer: this})
+	config := configuration{Deserializers: map[string]Deserializer{}}
+	Options.apply(Options.WriteTypes(this.writeTypes), Options.Serializer(this))(&config)
+	this.encoder = newDispatchEncoder(config)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,7 +67,7 @@ func (this *DispatchEncoderFixture) TestWhenEncodingUnknownMessageType_ReturnErr
 	this.So(this.serializeCalls, should.BeZeroValue)
 }
 func (this *DispatchEncoderFixture) TestWhenSerializationFails_ReturnError() {
-	this.messageTypes[reflect.TypeOf("")] = ""
+	this.writeTypes[reflect.TypeOf("")] = ""
 	this.dispatch.Message = "known type"
 	this.serializeError = errors.New("serialize fails")
 
@@ -78,7 +80,7 @@ func (this *DispatchEncoderFixture) TestWhenSerializationFails_ReturnError() {
 }
 
 func (this *DispatchEncoderFixture) TestWhenSerializationSucceeds_DispatchShouldBeFullyPopulated() {
-	this.messageTypes[reflect.TypeOf("")] = "message-type"
+	this.writeTypes[reflect.TypeOf("")] = "message-type"
 	this.dispatch.Message = "known type"
 
 	err := this.encoder.Encode(&this.dispatch)
@@ -90,7 +92,7 @@ func (this *DispatchEncoderFixture) TestWhenSerializationSucceeds_DispatchShould
 	this.So(this.dispatch.Topic, should.Equal, "message-type")
 }
 func (this *DispatchEncoderFixture) TestWhenDispatchTopicAlreadyPopulated_ItShouldIgnoreTopicAndPopulateOtherFields() {
-	this.messageTypes[reflect.TypeOf("")] = "message-type"
+	this.writeTypes[reflect.TypeOf("")] = "message-type"
 	this.dispatch.Message = "known type"
 	this.dispatch.Topic = "can't touch this"
 
