@@ -1,6 +1,0 @@
-github.com/smartystreets/assertions v1.0.1 h1:voD4ITNjPL5jjBfgR/r8fPIIBrliWrWHeiJApdr3r4w=
-github.com/smartystreets/assertions v1.0.1/go.mod h1:kHHU4qYBaI3q23Pp3VPrmWhuIUrLW/7eUrw0BU5VaoM=
-github.com/smartystreets/gunit v1.3.2 h1:rIn+6hLru7YnR+KO4iBRUeAyDV2FQR17j9PpvHKkkzM=
-github.com/smartystreets/gunit v1.3.2/go.mod h1:43891Rs2H/qaAz366FXE38Ic7BwyM7E5FO5IB+kliJs=
-github.com/smartystreets/logging v1.1.0 h1:l+ufYYAt9NyT6K+54lL2Bn6HelBtL59nHLkvQLxGyP8=
-github.com/smartystreets/logging v1.1.0/go.mod h1:pxtHpn+XVAg8SjodfpmE6+kgU3CAgWLY7TRjUIiUZdM=
