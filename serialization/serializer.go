@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-type defaultSerializer struct {
-}
+type defaultSerializer struct{}
 
 func (this defaultSerializer) Serialize(source interface{}) ([]byte, error) {
 	if raw, err := json.Marshal(source); err != nil {
