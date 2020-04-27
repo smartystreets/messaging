@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"net"
-	"net/url"
 	"testing"
 	"time"
 
@@ -22,7 +21,7 @@ type DialerFixture struct {
 
 	backgroundContext context.Context
 	dialer            netDialer
-	brokerAddress     url.URL
+	brokerAddress     string
 	tlsConfig         *tls.Config
 
 	dialedContext  context.Context
@@ -40,15 +39,19 @@ type DialerFixture struct {
 
 func (this *DialerFixture) Setup() {
 	this.backgroundContext = context.Background()
-	address, _ := url.Parse("amqps://localhost:5672/")
-	this.brokerAddress = *address
+	this.brokerAddress = "amqps://localhost:5672/"
 	this.tlsConfig = &tls.Config{}
 	this.dialConnection = this
-
-	this.dialer = newTLSDialer(this, configuration{
-		Endpoint:  this.brokerEndpoint,
-		TLSClient: this.tlsClient,
-	})
+	this.initializeTLSDialer()
+}
+func (this *DialerFixture) initializeTLSDialer() {
+	config := configuration{}
+	Options.apply(
+		Options.StaticAddress(this.brokerAddress),
+		Options.StaticTLSConfig(this.tlsConfig),
+		Options.TLSClient(this.tlsClient),
+	)(&config)
+	this.dialer = newTLSDialer(this, config)
 }
 
 func (this *DialerFixture) TestWhenDialingFails_ReturnUnderlyingError() {
@@ -67,6 +70,7 @@ func (this *DialerFixture) TestWhenDialingFails_ReturnUnderlyingError() {
 
 func (this *DialerFixture) TestWhenNoTLSConfigSpecified_DoNotEstablishTLSConnection() {
 	this.tlsConfig = nil
+	this.initializeTLSDialer()
 
 	conn, err := this.dialer.DialContext(this.backgroundContext, "network", "address")
 
@@ -76,7 +80,8 @@ func (this *DialerFixture) TestWhenNoTLSConfigSpecified_DoNotEstablishTLSConnect
 }
 
 func (this *DialerFixture) TestWhenAddressSchemaDoesNotSpecifyAMQPS_DoNotEstablishTLSConnection() {
-	this.brokerAddress.Scheme = "amqp"
+	this.brokerAddress = "amqp://localhost:5672"
+	this.initializeTLSDialer()
 
 	conn, err := this.dialer.DialContext(this.backgroundContext, "network", "address")
 
@@ -119,9 +124,6 @@ func (this *DialerFixture) DialContext(ctx context.Context, network, address str
 	return this.dialConnection, this.dialError
 }
 
-func (this *DialerFixture) brokerEndpoint() BrokerEndpoint {
-	return BrokerEndpoint{Address: this.brokerAddress, TLSConfig: this.tlsConfig}
-}
 func (this *DialerFixture) tlsClient(conn net.Conn, config *tls.Config) tlsConn {
 	this.dialedTLSConn = conn
 	this.dialedTLSConfig = config
