@@ -11,6 +11,12 @@ import (
 	"github.com/smartystreets/messaging/v3/rabbitmq/adapter"
 )
 
+func New(options ...option) messaging.Connector {
+	var config configuration
+	Options.apply(options...)(&config)
+	return newConnector(config)
+}
+
 type configuration struct {
 	Endpoint             func() BrokerEndpoint
 	Address              url.URL
