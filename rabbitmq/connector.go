@@ -81,25 +81,3 @@ func (this *defaultConnector) Close() error {
 
 	return nil
 }
-
-type defaultConnection struct {
-	inner  adapter.Connection
-	config configuration
-}
-
-func newConnection(inner adapter.Connection, config configuration) messaging.Connection {
-	// NOTE: using pointer type to allow for pointer equality check
-	return &defaultConnection{inner: inner, config: config}
-}
-func (this defaultConnection) Reader(ctx context.Context) (messaging.Reader, error) {
-	panic("implement me")
-}
-func (this defaultConnection) Writer(ctx context.Context) (messaging.Writer, error) {
-	panic("implement me")
-}
-func (this defaultConnection) CommitWriter(ctx context.Context) (messaging.CommitWriter, error) {
-	panic("implement me")
-}
-func (this defaultConnection) Close() error {
-	return this.inner.Close()
-}

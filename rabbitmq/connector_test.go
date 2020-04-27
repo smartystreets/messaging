@@ -53,7 +53,7 @@ func (this *ConnectorFixture) initializeConnector() {
 func (this *ConnectorFixture) TestWhenConnectingToBroker_UseDialedNetworkConnectionAndParsedConfig() {
 	connection, err := this.connector.Connect(this.ctx)
 
-	this.So(connection, should.NotBeNil)
+	this.So(connection, should.HaveSameTypeAs, &defaultConnection{})
 	this.So(err, should.BeNil)
 
 	this.So(this.dialContext, should.Equal, this.ctx)
