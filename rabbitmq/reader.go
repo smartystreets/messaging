@@ -29,7 +29,7 @@ func (this *defaultReader) Stream(_ context.Context, config messaging.StreamConf
 	defer this.mutex.Unlock()
 
 	if config.ExclusiveStream && len(this.streams) > 0 {
-		return nil, ErrMultipleStreams // NOTE: what if the first stream is exclusive???
+		return nil, ErrMultipleStreams // TODO: what if the first stream is exclusive and subsequent aren't?
 	}
 
 	if err := establishTopology(this.inner, config); err != nil {
