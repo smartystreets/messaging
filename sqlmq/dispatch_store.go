@@ -3,16 +3,25 @@ package sqlmq
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/smartystreets/messaging/v3"
 	"github.com/smartystreets/messaging/v3/sqlmq/adapter"
 )
 
 type dispatchStore struct {
+	db               adapter.ReadWriter
+	now              func() time.Time
+	confirmStatement *strings.Builder
 }
 
-func (this *dispatchStore) Store(ctx context.Context, writer adapter.Writer, dispatches []messaging.Dispatch) error {
+func newMessageStore(db adapter.ReadWriter, now func() time.Time) messageStore {
+	return dispatchStore{db: db, now: now, confirmStatement: &strings.Builder{}}
+}
+
+func (this dispatchStore) Store(ctx context.Context, writer adapter.Writer, dispatches []messaging.Dispatch) error {
 	length := uint64(len(dispatches))
 	if length == 0 {
 		return nil
@@ -40,7 +49,7 @@ func (this *dispatchStore) Store(ctx context.Context, writer adapter.Writer, dis
 
 	return nil
 }
-func (this *dispatchStore) buildExecArgs(dispatches []messaging.Dispatch) (string, []interface{}) {
+func (this dispatchStore) buildExecArgs(dispatches []messaging.Dispatch) (string, []interface{}) {
 	builder := &strings.Builder{}
 	args := make([]interface{}, 0, len(dispatches)*2)
 
@@ -55,6 +64,47 @@ func (this *dispatchStore) buildExecArgs(dispatches []messaging.Dispatch) (strin
 	}
 
 	return builder.String(), args
+}
+
+func (this dispatchStore) Load(ctx context.Context, id uint64) (results []messaging.Dispatch, err error) {
+	statement := fmt.Sprintf("SELECT id, type, payload FROM Messages WHERE dispatched IS NULL AND id > %d;", id)
+	rows, err := this.db.QueryContext(ctx, statement)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	now := this.now().UTC()
+	for rows.Next() {
+		dispatch := messaging.Dispatch{Timestamp: now}
+		if err := rows.Scan(&dispatch.MessageID, &dispatch.MessageType, &dispatch.Payload); err != nil {
+			return nil, err
+		}
+		results = append(results, dispatch)
+	}
+
+	return results, rows.Err()
+}
+func (this dispatchStore) Confirm(ctx context.Context, dispatches []messaging.Dispatch) error {
+	if len(dispatches) == 0 {
+		return nil
+	}
+
+	defer this.confirmStatement.Reset()
+
+	for i, dispatch := range dispatches {
+		var template = "%d, "
+		if i+1 >= len(dispatches) {
+			template = "%d"
+		}
+		_, _ = fmt.Fprintf(this.confirmStatement, template, dispatch.MessageID)
+	}
+
+	now := this.now().UTC().Format("2006-01-02 15:04:05.000000")
+	const statementFormat = "UPDATE Messages SET dispatched = '%s' WHERE dispatched IS NULL AND id IN (%s);"
+	statement := fmt.Sprintf(statementFormat, now, this.confirmStatement.String())
+	_, err := this.db.ExecContext(ctx, statement)
+	return err
 }
 
 var (

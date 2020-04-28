@@ -130,6 +130,12 @@ func (this *DispatchReceiverFixture) Store(ctx context.Context, writer adapter.W
 	this.storeWrites = append(this.storeWrites, writes...)
 	return this.storeError
 }
+func (this *DispatchReceiverFixture) Load(ctx context.Context, id uint64) ([]messaging.Dispatch, error) {
+	panic("nop")
+}
+func (this *DispatchReceiverFixture) Confirm(ctx context.Context, dispatches []messaging.Dispatch) error {
+	panic("nop")
+}
 
 func (this *DispatchReceiverFixture) ExecContext(ctx context.Context, statement string, args ...interface{}) (sql.Result, error) {
 	panic("nop")
