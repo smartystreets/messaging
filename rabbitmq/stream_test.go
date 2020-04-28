@@ -64,6 +64,11 @@ func (this *StreamFixture) TestWhenReading_ReadFromConsumerBufferChannel() {
 		DeliveryTag:     6,
 		Redelivered:     false,
 		Body:            []byte("payload"),
+		Headers: map[string]interface{}{
+			"header10": "value10",
+			"header20": int64(20),
+			"header30": false,
+		},
 	}
 
 	var delivery messaging.Delivery
@@ -81,7 +86,11 @@ func (this *StreamFixture) TestWhenReading_ReadFromConsumerBufferChannel() {
 		ContentType:     "content-type",
 		ContentEncoding: "content-encoding",
 		Payload:         []byte("payload"),
-		Headers:         nil, // TODO
+		Headers: map[string]interface{}{
+			"header10": "value10",
+			"header20": int64(20),
+			"header30": false,
+		},
 	})
 }
 func (this *StreamFixture) TestWhenReadingFromAClosedBufferChannel_ReturnEOF() {

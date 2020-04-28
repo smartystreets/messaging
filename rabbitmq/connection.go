@@ -16,7 +16,7 @@ func newConnection(inner adapter.Connection, config configuration) messaging.Con
 	// NOTE: using pointer type to allow for pointer equality check
 	return &defaultConnection{inner: inner, config: config}
 }
-func (this defaultConnection) Reader(ctx context.Context) (messaging.Reader, error) {
+func (this defaultConnection) Reader(_ context.Context) (messaging.Reader, error) {
 	if channel, err := this.inner.Channel(); err != nil {
 		return nil, err
 	} else {
