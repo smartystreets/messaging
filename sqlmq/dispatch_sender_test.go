@@ -2,6 +2,7 @@ package sqlmq
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -42,7 +43,16 @@ type DispatchSenderFixture struct {
 
 func (this *DispatchSenderFixture) Setup() {
 	this.ctx, this.shutdown = context.WithCancel(context.Background())
-	this.writer = newDispatchSender(this)
+	this.initializeDispatchSender()
+}
+func (this *DispatchSenderFixture) initializeDispatchSender() {
+	config := configuration{}
+	Options.apply(
+		Options.Context(this.ctx),
+		Options.StorageHandle(&sql.DB{}),
+		Options.TransportConnector(this),
+	)(&config)
+	this.writer = newDispatchSender(config)
 }
 
 func (this *DispatchSenderFixture) TestWhenEmptySetOfDispatches_Nop() {

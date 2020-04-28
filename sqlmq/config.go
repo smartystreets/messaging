@@ -1,15 +1,101 @@
 package sqlmq
 
 import (
+	"context"
 	"database/sql"
+	"time"
 
 	"github.com/smartystreets/messaging/v3"
 	"github.com/smartystreets/messaging/v3/sqlmq/adapter"
 )
 
 type configuration struct {
+	Context       context.Context
+	Target        messaging.Connector
+	DriverName    string
+	DataSource    string
 	StorageHandle adapter.Handle
-	SQLTxOptions  sql.TxOptions
 	Channel       chan messaging.Dispatch
-	MessageStore  messageStore
+	SQLTxOptions  sql.TxOptions
+	Now           func() time.Time
+	Sleep         time.Duration
+
+	MessageStore messageStore
+	Sender       messaging.Writer
+}
+
+func New(transport messaging.Connector, options ...option) (messaging.Connector, messaging.ListenCloser) {
+	var config configuration
+	options = append(options, Options.TransportConnector(transport))
+	Options.apply(options...)(&config)
+	return newConnector(config), nil // newDispatchProcessor(config)
+}
+
+var Options singleton
+
+type singleton struct{}
+type option func(*configuration)
+
+func (singleton) Context(value context.Context) option {
+	return func(this *configuration) { this.Context = value }
+}
+func (singleton) TransportConnector(value messaging.Connector) option {
+	return func(this *configuration) { this.Target = value }
+}
+func (singleton) DataSource(driver, dataSource string) option {
+	return func(this *configuration) { this.DriverName = driver; this.DataSource = dataSource }
+}
+func (singleton) StorageHandle(value *sql.DB) option {
+	return func(this *configuration) { this.StorageHandle = adapter.New(value) }
+}
+func (singleton) Channel(value chan messaging.Dispatch) option {
+	return func(this *configuration) { this.Channel = value }
+}
+func (singleton) ChannelBufferSize(value int) option {
+	return func(this *configuration) { this.Channel = make(chan messaging.Dispatch, value) }
+}
+func (singleton) IsolationLevel(value sql.IsolationLevel) option {
+	return func(this *configuration) { this.SQLTxOptions = sql.TxOptions{Isolation: value} }
+}
+func (singleton) Now(value func() time.Time) option {
+	return func(this *configuration) { this.Now = value }
+}
+func (singleton) RetryTimeout(value time.Duration) option {
+	return func(this *configuration) { this.Sleep = value }
+}
+
+func (singleton) apply(options ...option) option {
+	return func(this *configuration) {
+		for _, option := range Options.defaults(options...) {
+			option(this)
+		}
+
+		if this.StorageHandle == nil {
+			Options.StorageHandle(openStorageHandle(this.DriverName, this.DataSource))(this)
+		}
+
+		this.MessageStore = newMessageStore(this.StorageHandle, this.Now)
+		this.Sender = newDispatchSender(*this)
+	}
+}
+func (singleton) defaults(options ...option) []option {
+	var defaultContext = context.Background()
+	const defaultChannelBufferSize = 1024
+	const defaultIsolationLevel = sql.LevelReadCommitted
+	const defaultRetryTimeout = time.Second * 5
+
+	return append([]option{
+		Options.Context(defaultContext),
+		Options.ChannelBufferSize(defaultChannelBufferSize),
+		Options.IsolationLevel(defaultIsolationLevel),
+		Options.Now(time.Now),
+		Options.RetryTimeout(defaultRetryTimeout),
+	}, options...)
+}
+func openStorageHandle(driver, dataSource string) *sql.DB {
+	if handle, err := sql.Open(driver, dataSource); err != nil {
+		panic(err)
+	} else {
+		return handle
+	}
 }

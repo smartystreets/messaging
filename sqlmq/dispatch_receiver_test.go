@@ -37,7 +37,16 @@ type DispatchReceiverFixture struct {
 func (this *DispatchReceiverFixture) Setup() {
 	this.ctx, this.ctxShutdown = context.WithCancel(context.Background())
 	this.channel = make(chan messaging.Dispatch, 16)
-	config := configuration{Channel: this.channel, MessageStore: this}
+	this.initializeDispatchWriter()
+}
+func (this *DispatchReceiverFixture) initializeDispatchWriter() {
+	config := configuration{}
+	Options.apply(
+		Options.Context(this.ctx),
+		Options.StorageHandle(&sql.DB{}),
+		Options.Channel(this.channel),
+	)(&config)
+	config.MessageStore = this
 	this.writer = newDispatchReceiver(this.ctx, this, config)
 }
 

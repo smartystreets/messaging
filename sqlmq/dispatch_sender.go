@@ -13,8 +13,8 @@ type dispatchSender struct {
 	writer     messaging.CommitWriter
 }
 
-func newDispatchSender(target messaging.Connector) messaging.Writer {
-	return &dispatchSender{connector: target}
+func newDispatchSender(config configuration) messaging.Writer {
+	return &dispatchSender{connector: config.Target}
 }
 
 func (this *dispatchSender) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {

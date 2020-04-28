@@ -32,10 +32,17 @@ type ConnectorFixture struct {
 }
 
 func (this *ConnectorFixture) Setup() {
-	this.ctx = context.Background()
-	this.sqlOptions = sql.TxOptions{Isolation: sql.LevelReadCommitted}
+	config := configuration{}
+	Options.apply(
+		Options.Context(context.Background()),
+		Options.IsolationLevel(sql.LevelReadCommitted),
+		Options.StorageHandle(&sql.DB{}),
+	)(&config)
+	this.ctx = config.Context
+	this.sqlOptions = config.SQLTxOptions
 	this.sqlTx = &sql.Tx{}
-	this.connector = newConnector(configuration{StorageHandle: this, SQLTxOptions: this.sqlOptions})
+	config.StorageHandle = this
+	this.connector = newConnector(config)
 }
 
 func (this *ConnectorFixture) TestWhenClosing_ItShouldCloseUnderlyingHandle() {
