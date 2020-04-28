@@ -9,17 +9,17 @@ import (
 
 type dispatchReceiver struct {
 	ctx    context.Context
-	active adapter.Transaction
+	tx     adapter.Transaction
 	output chan messaging.Dispatch
 	store  messageStore
 
 	buffer []messaging.Dispatch
 }
 
-func newDispatchReceiver(ctx context.Context, active adapter.Transaction, config configuration) messaging.CommitWriter {
+func newDispatchReceiver(ctx context.Context, tx adapter.Transaction, config configuration) messaging.CommitWriter {
 	return &dispatchReceiver{
 		ctx:    ctx,
-		active: active,
+		tx:     tx,
 		output: config.Channel,
 		store:  config.MessageStore,
 	}
@@ -31,11 +31,11 @@ func (this *dispatchReceiver) Write(_ context.Context, dispatches ...messaging.D
 }
 
 func (this *dispatchReceiver) Commit() error {
-	if err := this.store.Store(this.ctx, this.active, this.buffer); err != nil {
+	if err := this.store.Store(this.ctx, this.tx, this.buffer); err != nil {
 		return err
 	}
 
-	if err := this.active.Commit(); err != nil {
+	if err := this.tx.Commit(); err != nil {
 		return err
 	}
 
@@ -50,7 +50,5 @@ func (this *dispatchReceiver) Commit() error {
 	return nil
 }
 
-func (this *dispatchReceiver) Rollback() error {
-	return this.active.Rollback()
-}
-func (this *dispatchReceiver) Close() error { return nil }
+func (this *dispatchReceiver) Rollback() error { return this.tx.Rollback() }
+func (this *dispatchReceiver) Close() error    { return nil }
