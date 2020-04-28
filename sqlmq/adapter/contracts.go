@@ -13,7 +13,7 @@ type Handle interface {
 	BeginTx(ctx context.Context, options *sql.TxOptions) (Transaction, error)
 	io.Closer
 
-	Handle() *sql.DB
+	DBHandle() *sql.DB
 }
 
 type Reader interface {
@@ -42,7 +42,7 @@ type Transaction interface {
 	ReadWriter
 	Transactional
 
-	Handle() *sql.Tx
+	TxHandle() *sql.Tx
 }
 type Transactional interface {
 	Commit() error
