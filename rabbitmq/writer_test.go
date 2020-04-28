@@ -104,6 +104,7 @@ func (this *WriterFixture) TestWhenWrite_PublishToUnderlyingChannel() {
 		Headers: map[string]interface{}{
 			"header10": "value10",
 			"header20": int64(20),
+			"header30": false,
 		},
 	})
 
@@ -114,7 +115,6 @@ func (this *WriterFixture) TestWhenWrite_PublishToUnderlyingChannel() {
 	this.So(this.publishKeys, should.Resemble, []string{"5"})
 	this.So(this.publishMessages, should.Resemble, []amqp.Publishing{
 		{
-			Headers:         nil,
 			ContentType:     "content-type",
 			ContentEncoding: "content-encoding",
 			DeliveryMode:    amqp.Persistent,
@@ -128,6 +128,11 @@ func (this *WriterFixture) TestWhenWrite_PublishToUnderlyingChannel() {
 			UserId:          "",
 			AppId:           "1",
 			Body:            []byte("payload"),
+			Headers: map[string]interface{}{
+				"header10": "value10",
+				"header20": int64(20),
+				"header30": false,
+			},
 		},
 	})
 }

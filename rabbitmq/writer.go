@@ -40,7 +40,6 @@ func toAMQPDispatch(dispatch messaging.Dispatch, now time.Time) amqp.Publishing 
 		dispatch.Timestamp = now
 	}
 
-	// TODO: headers
 	return amqp.Publishing{
 		AppId:           strconv.FormatUint(dispatch.SourceID, 10),
 		MessageId:       strconv.FormatUint(dispatch.MessageID, 10),
@@ -51,6 +50,7 @@ func toAMQPDispatch(dispatch messaging.Dispatch, now time.Time) amqp.Publishing 
 		Timestamp:       dispatch.Timestamp,
 		Expiration:      computeExpiration(dispatch.Expiration),
 		DeliveryMode:    computePersistence(dispatch.Durable),
+		Headers:         dispatch.Headers,
 		Body:            dispatch.Payload,
 	}
 }
