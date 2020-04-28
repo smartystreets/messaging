@@ -37,7 +37,7 @@ func (this defaultConnection) CommitWriter(ctx context.Context) (messaging.Commi
 		state.Tx = tx.TxHandle() // allow caller to get a handle on the transaction
 	}
 
-	return newDispatchReceiver(tx, this.config.Channel, ctx), nil
+	return newDispatchReceiver(ctx, tx, this.config), nil
 }
 
 func (this defaultConnection) Close() error { return nil }

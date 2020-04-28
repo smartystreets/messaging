@@ -11,4 +11,5 @@ type configuration struct {
 	StorageHandle adapter.Handle
 	SQLTxOptions  sql.TxOptions
 	Channel       chan messaging.Dispatch
+	MessageStore  messageStore
 }

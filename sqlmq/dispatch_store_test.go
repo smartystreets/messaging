@@ -18,6 +18,7 @@ func TestDispatchStoreFixture(t *testing.T) {
 type DispatchStoreFixture struct {
 	*gunit.Fixture
 
+	ctx   context.Context
 	store messageStore
 
 	execCalls     int
@@ -32,11 +33,12 @@ type DispatchStoreFixture struct {
 }
 
 func (this *DispatchStoreFixture) Setup() {
+	this.ctx = context.Background()
 	this.store = &dispatchStore{}
 }
 
 func (this *DispatchStoreFixture) TestWhenNoDispatchesToWrite_DoNotPerformWriteOperation() {
-	err := this.store.Store(this, nil)
+	err := this.store.Store(this.ctx, this, nil)
 
 	this.So(err, should.BeNil)
 	this.So(this.execCalls, should.BeZeroValue)
@@ -50,11 +52,11 @@ func (this *DispatchStoreFixture) TestWhenStoring_WriteToUnderlyingStoreAndMarkD
 		{MessageType: "3", Payload: []byte("c")},
 	}
 
-	err := this.store.Store(this, writes)
+	err := this.store.Store(this.ctx, this, writes)
 
 	this.So(err, should.BeNil)
 
-	this.So(this.execContext, should.BeNil)
+	this.So(this.execContext, should.Equal, this.ctx)
 	this.So(this.execStatement, should.Equal, "INSERT INTO Messages (type, payload) VALUES (?,?),(?,?),(?,?);")
 	this.So(this.execArgs, should.Resemble, []interface{}{
 		"1", []byte("a"),
@@ -71,7 +73,7 @@ func (this *DispatchStoreFixture) TestWhenStoring_WriteToUnderlyingStoreAndMarkD
 func (this *DispatchStoreFixture) TestWhenStoreWriteFails_ReturnErrorDoNotCommitOrSendToOutputChannel() {
 	this.execError = errors.New("")
 
-	err := this.store.Store(this, []messaging.Dispatch{{MessageType: "1", Payload: []byte("a")}})
+	err := this.store.Store(this.ctx, this, []messaging.Dispatch{{MessageType: "1", Payload: []byte("a")}})
 
 	this.So(err, should.Equal, this.execError)
 }
@@ -79,7 +81,7 @@ func (this *DispatchStoreFixture) TestWhenRowsAffectedDoesNotMatchWrites_ReturnE
 	this.rowsAffectedValue = 0
 	this.lastInsertID = 1
 
-	err := this.store.Store(this, []messaging.Dispatch{{MessageType: "1", Payload: []byte("a")}})
+	err := this.store.Store(this.ctx, this, []messaging.Dispatch{{MessageType: "1", Payload: []byte("a")}})
 
 	this.So(err, should.Equal, errRowsAffected)
 }
@@ -87,7 +89,7 @@ func (this *DispatchStoreFixture) TestWhenLastInsertIDCannotBeDetermined_ReturnE
 	this.rowsAffectedValue = 1
 	this.lastInsertID = 0
 
-	err := this.store.Store(this, []messaging.Dispatch{{MessageType: "1", Payload: []byte("a")}})
+	err := this.store.Store(this.ctx, this, []messaging.Dispatch{{MessageType: "1", Payload: []byte("a")}})
 
 	this.So(err, should.Equal, errIdentityFailure)
 }

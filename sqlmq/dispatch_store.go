@@ -1,6 +1,8 @@
 package sqlmq
 
 import (
+	"context"
+	"errors"
 	"strings"
 
 	"github.com/smartystreets/messaging/v3"
@@ -10,14 +12,14 @@ import (
 type dispatchStore struct {
 }
 
-func (this *dispatchStore) Store(writer adapter.Writer, dispatches []messaging.Dispatch) error {
+func (this *dispatchStore) Store(ctx context.Context, writer adapter.Writer, dispatches []messaging.Dispatch) error {
 	length := uint64(len(dispatches))
 	if length == 0 {
 		return nil
 	}
 
 	statement, args := this.buildExecArgs(dispatches)
-	result, err := writer.ExecContext(nil, statement, args...)
+	result, err := writer.ExecContext(ctx, statement, args...)
 	if err != nil {
 		return err
 	}
@@ -54,3 +56,8 @@ func (this *dispatchStore) buildExecArgs(dispatches []messaging.Dispatch) (strin
 
 	return builder.String(), args
 }
+
+var (
+	errRowsAffected    = errors.New("the number of modified rows was not expected compared to the number of writes performed")
+	errIdentityFailure = errors.New("unable to determine the identity of the inserted row(s)")
+)
