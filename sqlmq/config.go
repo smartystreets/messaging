@@ -74,8 +74,13 @@ func (singleton) apply(options ...option) option {
 			Options.StorageHandle(openStorageHandle(this.DriverName, this.DataSource))(this)
 		}
 
-		this.MessageStore = newMessageStore(this.StorageHandle, this.Now)
-		this.Sender = newDispatchSender(*this)
+		if this.MessageStore == nil {
+			this.MessageStore = newMessageStore(this.StorageHandle, this.Now)
+		}
+
+		if this.Sender == nil {
+			this.Sender = newDispatchSender(*this)
+		}
 	}
 }
 func (singleton) defaults(options ...option) []option {

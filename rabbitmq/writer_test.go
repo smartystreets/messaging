@@ -205,26 +205,26 @@ func (this *WriterFixture) Publish(exchange, key string, envelope amqp.Publishin
 }
 
 func (this *WriterFixture) DeclareQueue(name string) error {
-	panic("implement me")
+	panic("nop")
 }
 func (this *WriterFixture) DeclareExchange(name string) error {
-	panic("implement me")
+	panic("nop")
 }
 func (this *WriterFixture) BindQueue(queue, exchange string) error {
-	panic("implement me")
+	panic("nop")
 }
 func (this *WriterFixture) BufferSize(value uint16) error {
-	panic("implement me")
+	panic("nop")
 }
 func (this *WriterFixture) Consume(consumerID, queue string) (<-chan amqp.Delivery, error) {
-	panic("implement me")
+	panic("nop")
 }
 func (this *WriterFixture) Ack(deliveryTag uint64, multiple bool) error {
-	panic("implement me")
+	panic("nop")
 }
 func (this *WriterFixture) CancelConsumer(consumerID string) error {
-	panic("implement me")
+	panic("nop")
 }
 func (this *WriterFixture) Tx() error {
-	panic("implement me")
+	panic("nop")
 }

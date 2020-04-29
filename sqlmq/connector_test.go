@@ -124,10 +124,10 @@ func (this *ConnectorFixture) BeginTx(ctx context.Context, options *sql.TxOption
 	return this, this.beginError
 }
 func (this *ConnectorFixture) Commit() error {
-	panic("implement me")
+	panic("nop")
 }
 func (this *ConnectorFixture) Rollback() error {
-	panic("implement me")
+	panic("nop")
 }
 func (this *ConnectorFixture) DBHandle() *sql.DB {
 	panic("nop")
