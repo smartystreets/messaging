@@ -1,4 +1,4 @@
-package handlers
+package transactional
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
-func TestTransactionFixture(t *testing.T) {
-	gunit.Run(new(TransactionFixture), t)
+func TestFixture(t *testing.T) {
+	gunit.Run(new(Fixture), t)
 }
 
-type TransactionFixture struct {
+type Fixture struct {
 	*gunit.Fixture
 
 	ctx      context.Context
@@ -38,7 +38,7 @@ type TransactionFixture struct {
 
 	closeCount int
 
-	factoryState TransactionState
+	factoryState State
 	factoryCount int
 	factoryError error
 
@@ -53,25 +53,25 @@ type TransactionFixture struct {
 	monitorCommitErrors  []error
 }
 
-func (this *TransactionFixture) Setup() {
+func (this *Fixture) Setup() {
 	this.ctx = context.Background()
 	this.messages = []interface{}{1, 2, 3}
 	this.sqlTx = &sql.Tx{}
 	this.monitor = &FakeMonitor{fixture: this}
-	this.handler = NewTransactional(this, this.factory, TransactionalOptions.Monitor(this.monitor))
+	this.handler = New(this, this.factory, Options.Monitor(this.monitor))
 }
-func (this *TransactionFixture) handle() {
+func (this *Fixture) handle() {
 	this.handler.Handle(this.ctx, this.messages...)
 }
 
-func (this *TransactionFixture) TestWhenOpeningConnectionFails_ItShouldPanic() {
+func (this *Fixture) TestWhenOpeningConnectionFails_ItShouldPanic() {
 	this.connectError = errors.New("")
 
 	this.So(this.handle, should.PanicWith, this.connectError)
 	this.So(this.connectContext, should.Equal, this.ctx)
 	this.So(this.monitorBeginErrors, should.Resemble, []error{this.connectError})
 }
-func (this *TransactionFixture) TestWhenOpeningCommitWriterFails_ItShouldPanic() {
+func (this *Fixture) TestWhenOpeningCommitWriterFails_ItShouldPanic() {
 	this.commitWriterError = errors.New("")
 
 	this.So(this.handle, should.PanicWith, this.commitWriterError)
@@ -84,15 +84,15 @@ func (this *TransactionFixture) TestWhenOpeningCommitWriterFails_ItShouldPanic()
 	this.So(this.closeCount, should.Equal, 1) // close connection
 }
 
-func (this *TransactionFixture) TestWhenInvokingFactoryPanics_ItShouldPanicAndRollBack() {
+func (this *Fixture) TestWhenInvokingFactoryPanics_ItShouldPanicAndRollBack() {
 	this.factoryError = errors.New("")
 
 	this.So(this.handle, should.PanicWith, this.factoryError)
-	this.So(this.factoryState, should.Resemble, TransactionState{Tx: this.sqlTx, Writer: this})
+	this.So(this.factoryState, should.Resemble, State{Tx: this.sqlTx, Writer: this})
 	this.So(this.closeCount, should.Equal, 2) // close connection and writer
 	this.So(this.rollbackCount, should.Equal, 1)
 }
-func (this *TransactionFixture) TestWhenInvokingHandlerPanics_ItShouldPanicAndRollback() {
+func (this *Fixture) TestWhenInvokingHandlerPanics_ItShouldPanicAndRollback() {
 	this.handleError = errors.New("")
 
 	this.So(this.handle, should.PanicWith, this.handleError)
@@ -102,7 +102,7 @@ func (this *TransactionFixture) TestWhenInvokingHandlerPanics_ItShouldPanicAndRo
 	this.So(this.handleMessages, should.Resemble, this.messages)
 }
 
-func (this *TransactionFixture) TestWhenHandlerCompletesSuccessfully_ItShouldCommit() {
+func (this *Fixture) TestWhenHandlerCompletesSuccessfully_ItShouldCommit() {
 	this.handle()
 
 	this.So(this.closeCount, should.Equal, 2) // close connection and writer
@@ -111,7 +111,7 @@ func (this *TransactionFixture) TestWhenHandlerCompletesSuccessfully_ItShouldCom
 	this.So(this.monitorCommitCount, should.Equal, 1)
 	this.So(this.monitorRollbackCount, should.Equal, 0)
 }
-func (this *TransactionFixture) TestWhenCommitOperationFails_ItShouldPanicAndRollBack() {
+func (this *Fixture) TestWhenCommitOperationFails_ItShouldPanicAndRollBack() {
 	this.commitError = errors.New("")
 
 	this.So(this.handle, should.PanicWith, this.commitError)
@@ -125,42 +125,42 @@ func (this *TransactionFixture) TestWhenCommitOperationFails_ItShouldPanicAndRol
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (this *TransactionFixture) Connect(ctx context.Context) (messaging.Connection, error) {
+func (this *Fixture) Connect(ctx context.Context) (messaging.Connection, error) {
 	this.connectCount++
 	this.connectContext = ctx
 	return this, this.connectError
 }
-func (this *TransactionFixture) Close() error {
+func (this *Fixture) Close() error {
 	this.closeCount++
 	return nil
 }
 
-func (this *TransactionFixture) CommitWriter(ctx context.Context) (messaging.CommitWriter, error) {
+func (this *Fixture) CommitWriter(ctx context.Context) (messaging.CommitWriter, error) {
 	this.commitWriterCount++
 	this.commitWriterContext = ctx
 	ctx.(*transactionalContext).Store(this.sqlTx)
 	return this, this.commitWriterError
 }
-func (this *TransactionFixture) Reader(ctx context.Context) (messaging.Reader, error) {
+func (this *Fixture) Reader(ctx context.Context) (messaging.Reader, error) {
 	panic("nop")
 }
-func (this *TransactionFixture) Writer(ctx context.Context) (messaging.Writer, error) {
+func (this *Fixture) Writer(ctx context.Context) (messaging.Writer, error) {
 	panic("nop")
 }
 
-func (this *TransactionFixture) Commit() error {
+func (this *Fixture) Commit() error {
 	this.commitCount++
 	return this.commitError
 }
-func (this *TransactionFixture) Rollback() error {
+func (this *Fixture) Rollback() error {
 	this.rollbackCount++
 	return this.rollbackError
 }
-func (this *TransactionFixture) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {
+func (this *Fixture) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {
 	panic("nop")
 }
 
-func (this *TransactionFixture) factory(state TransactionState) messaging.Handler {
+func (this *Fixture) factory(state State) messaging.Handler {
 	this.factoryCount++
 	this.factoryState = state
 	if this.factoryError != nil {
@@ -168,7 +168,7 @@ func (this *TransactionFixture) factory(state TransactionState) messaging.Handle
 	}
 	return this
 }
-func (this *TransactionFixture) Handle(ctx context.Context, messages ...interface{}) {
+func (this *Fixture) Handle(ctx context.Context, messages ...interface{}) {
 	this.handleContext = ctx
 	this.handleMessages = messages
 	if this.handleError != nil {
@@ -178,7 +178,7 @@ func (this *TransactionFixture) Handle(ctx context.Context, messages ...interfac
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type FakeMonitor struct{ fixture *TransactionFixture }
+type FakeMonitor struct{ fixture *Fixture }
 
 func (this *FakeMonitor) BeginFailure(err error) {
 	this.fixture.monitorBeginErrors = append(this.fixture.monitorBeginErrors, err)

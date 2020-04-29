@@ -1,4 +1,4 @@
-package handlers
+package transactional
 
 import (
 	"context"
@@ -7,22 +7,14 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
-type Transactional struct {
+type handler struct {
 	connector messaging.Connector
-	factory   handlerFactory
-	monitor   TransactionMonitor
+	factory   handlerFunc
+	monitor   Monitor
 	logger    messaging.Logger
 }
 
-func NewTransactional(connector messaging.Connector, factory handlerFactory, options ...txOption) messaging.Handler {
-	this := Transactional{connector: connector, factory: factory}
-	for _, option := range TransactionalOptions.defaults(options...) {
-		option(&this)
-	}
-	return this
-}
-
-func (this Transactional) Handle(ctx context.Context, messages ...interface{}) {
+func (this handler) Handle(ctx context.Context, messages ...interface{}) {
 	connection, err := this.connector.Connect(ctx)
 	if err != nil {
 		this.logger.Printf("[WARN] Unable to begin transaction [%s].", err)
@@ -30,17 +22,17 @@ func (this Transactional) Handle(ctx context.Context, messages ...interface{}) {
 		panic(err)
 	}
 
-	txContext := newTransactionalContext(ctx, connection)
-	defer func() { this.finally(txContext, recover()) }()
-	writer, err := connection.CommitWriter(txContext)
+	txCtx := newContext(ctx, connection)
+	defer func() { this.finally(txCtx, recover()) }()
+	writer, err := connection.CommitWriter(txCtx)
 	if err != nil {
 		this.logger.Printf("[WARN] Unable to begin transaction [%s].", err)
 		this.monitor.BeginFailure(err)
 		panic(err)
 	}
 
-	txContext.Writer = writer
-	handler := this.factory(txContext.State())
+	txCtx.Writer = writer
+	handler := this.factory(txCtx.State())
 	handler.Handle(ctx, messages...)
 	if err := writer.Commit(); err != nil {
 		this.logger.Printf("[WARN] Unable to commit transaction [%s].", err)
@@ -50,7 +42,7 @@ func (this Transactional) Handle(ctx context.Context, messages ...interface{}) {
 
 	this.monitor.Commit()
 }
-func (this Transactional) finally(ctx *transactionalContext, err interface{}) {
+func (this handler) finally(ctx *transactionalContext, err interface{}) {
 	defer func() { _ = ctx.Close() }()
 	if err == nil {
 		return
@@ -73,12 +65,12 @@ type transactionalContext struct {
 	Connection messaging.Connection
 }
 
-func newTransactionalContext(ctx context.Context, connection messaging.Connection) *transactionalContext {
+func newContext(ctx context.Context, connection messaging.Connection) *transactionalContext {
 	return &transactionalContext{Context: ctx, Connection: connection}
 }
-func (this *transactionalContext) Store(tx *sql.Tx) { this.Tx = tx }
-func (this *transactionalContext) State() TransactionState {
-	return TransactionState{Tx: this.Tx, Writer: this.Writer}
+func (this *transactionalContext) Store(tx *sql.Tx) { this.Tx = tx } // used by sqlmq
+func (this *transactionalContext) State() State {
+	return State{Tx: this.Tx, Writer: this.Writer}
 }
 func (this *transactionalContext) Close() error {
 	if this.Writer != nil {

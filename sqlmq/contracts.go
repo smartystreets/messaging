@@ -16,5 +16,5 @@ type messageStore interface {
 
 type transactionalContext interface {
 	context.Context
-	Store(tx *sql.Tx)
+	Store(tx *sql.Tx) // used by transactional handler
 }

@@ -1,4 +1,4 @@
-package handlers
+package retry
 
 import (
 	"errors"
@@ -6,17 +6,17 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
-func NewRetry(inner messaging.Handler, options ...retryOption) messaging.Handler {
-	this := defaultRetry{Handler: inner}
+func New(inner messaging.Handler, options ...option) messaging.Handler {
+	this := handler{Handler: inner}
 
-	for _, option := range RetryOptions.defaults(options...) {
+	for _, option := range Options.defaults(options...) {
 		option(&this)
 	}
 
 	return this
 }
 
-type RetryMonitor interface {
+type Monitor interface {
 	Attempt(attempt int, resultError interface{})
 }
 
