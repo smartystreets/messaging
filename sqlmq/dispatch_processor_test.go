@@ -54,14 +54,14 @@ func (this *DispatchProcessorFixture) Setup() {
 	this.initializeDispatchProcessor()
 }
 func (this *DispatchProcessorFixture) initializeDispatchProcessor() {
-	config := configuration{MessageStore: this, Sender: this}
-	Options.apply(
+	_, this.listener = New(nil,
+		Options.MessageStore(this),
+		Options.MessageSender(this),
 		Options.Context(this.ctx),
 		Options.Channel(this.channel),
 		Options.RetryTimeout(this.sleepTimeout),
 		Options.StorageHandle(&sql.DB{}),
-	)(&config)
-	this.listener = newDispatchProcessor(config)
+	)
 }
 func (this *DispatchProcessorFixture) listen(sleep time.Duration) {
 	go func() {

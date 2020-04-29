@@ -7,6 +7,13 @@ import (
 )
 
 func New(value *sql.DB) Handle { return sqlDB{DB: value} }
+func Open(driver, dataSource string) Handle {
+	if handle, err := sql.Open(driver, dataSource); err != nil {
+		panic(err)
+	} else {
+		return New(handle)
+	}
+}
 
 type Handle interface {
 	ReadWriter

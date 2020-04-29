@@ -28,7 +28,7 @@ func New(transport messaging.Connector, options ...option) (messaging.Connector,
 	var config configuration
 	options = append(options, Options.TransportConnector(transport))
 	Options.apply(options...)(&config)
-	return newConnector(config), nil // newDispatchProcessor(config)
+	return newConnector(config), newDispatchProcessor(config)
 }
 
 var Options singleton
@@ -63,6 +63,12 @@ func (singleton) Now(value func() time.Time) option {
 func (singleton) RetryTimeout(value time.Duration) option {
 	return func(this *configuration) { this.Sleep = value }
 }
+func (singleton) MessageStore(value messageStore) option {
+	return func(this *configuration) { this.MessageStore = value }
+}
+func (singleton) MessageSender(value messaging.Writer) option {
+	return func(this *configuration) { this.Sender = value }
+}
 
 func (singleton) apply(options ...option) option {
 	return func(this *configuration) {
@@ -71,7 +77,7 @@ func (singleton) apply(options ...option) option {
 		}
 
 		if this.StorageHandle == nil {
-			Options.StorageHandle(openStorageHandle(this.DriverName, this.DataSource))(this)
+			this.StorageHandle = adapter.Open(this.DriverName, this.DataSource)
 		}
 
 		if this.MessageStore == nil {
@@ -96,11 +102,4 @@ func (singleton) defaults(options ...option) []option {
 		Options.Now(time.Now),
 		Options.RetryTimeout(defaultRetryTimeout),
 	}, options...)
-}
-func openStorageHandle(driver, dataSource string) *sql.DB {
-	if handle, err := sql.Open(driver, dataSource); err != nil {
-		panic(err)
-	} else {
-		return handle
-	}
 }
