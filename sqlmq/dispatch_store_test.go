@@ -105,16 +105,19 @@ func (this *DispatchStoreFixture) TestWhenLastInsertIDCannotBeDetermined_ReturnE
 
 func (this *DispatchStoreFixture) TestWhenLoading_ItShouldQueryUnderlingStorage() {
 	expected := []messaging.Dispatch{
-		{MessageID: 42, MessageType: "message-type1", Payload: []byte{4}, Timestamp: this.now},
-		{MessageID: 43, MessageType: "message-type2", Payload: []byte{5}, Timestamp: this.now},
-		{MessageID: 44, MessageType: "message-type3", Payload: []byte{6}, Timestamp: this.now},
+		{MessageID: 42, MessageType: "message-type1", Payload: []byte{4}},
+		{MessageID: 43, MessageType: "message-type2", Payload: []byte{5}},
+		{MessageID: 44, MessageType: "message-type3", Payload: []byte{6}},
 	}
 	this.queryResult = &storageQueryResult{items: expected}
 
 	results, err := this.store.Load(this.ctx, 42)
 
-	// TODO: append timestamp
-	this.So(results, should.Resemble, expected)
+	this.So(results, should.Resemble, []messaging.Dispatch{
+		{MessageID: 42, MessageType: "message-type1", Topic: "message-type1", Payload: []byte{4}, Timestamp: this.now},
+		{MessageID: 43, MessageType: "message-type2", Topic: "message-type2", Payload: []byte{5}, Timestamp: this.now},
+		{MessageID: 44, MessageType: "message-type3", Topic: "message-type3", Payload: []byte{6}, Timestamp: this.now},
+	})
 	this.So(err, should.BeNil)
 	this.So(this.queryStatement, should.Equal, "SELECT id, type, payload FROM Messages WHERE dispatched IS NULL AND id > 42;")
 	this.So(this.queryArgs, should.BeEmpty)

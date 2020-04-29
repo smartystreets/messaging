@@ -80,6 +80,8 @@ func (this dispatchStore) Load(ctx context.Context, id uint64) (results []messag
 		if err := rows.Scan(&dispatch.MessageID, &dispatch.MessageType, &dispatch.Payload); err != nil {
 			return nil, err
 		}
+
+		dispatch.Topic = dispatch.MessageType
 		results = append(results, dispatch)
 	}
 
