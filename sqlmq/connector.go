@@ -2,7 +2,6 @@ package sqlmq
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/smartystreets/messaging/v3"
 )
@@ -33,20 +32,11 @@ func (this defaultConnection) CommitWriter(ctx context.Context) (messaging.Commi
 		return nil, err
 	}
 
-	if state, ok := ctx.Value(txStateContextKey).(*TxState); ok {
-		state.Tx = tx.TxHandle() // allow caller to get a handle on the transaction
+	if txCtx, ok := ctx.(transactionalContext); ok {
+		txCtx.Store(tx.TxHandle())
 	}
 
 	return newDispatchReceiver(ctx, tx, this.config), nil
 }
 
 func (this defaultConnection) Close() error { return nil }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-type TxState struct {
-	Tx     *sql.Tx
-	Writer messaging.Writer
-}
-
-const txStateContextKey = "sql.tx"

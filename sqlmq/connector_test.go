@@ -96,13 +96,12 @@ func (this *ConnectorFixture) TestWhenOpeningCommitWriterItShouldReturnNewWriter
 	this.So(err, should.BeNil)
 }
 func (this *ConnectorFixture) TestWhenOpeningCommitWriterWithTxStateOnCallingContext_ItShouldAppendTxToContext() {
-	var state TxState
-	contextWithTxState := context.WithValue(this.ctx, txStateContextKey, &state)
 	connection, _ := this.connector.Connect(this.ctx)
 
-	_, _ = connection.CommitWriter(contextWithTxState)
+	txContext := &transactionalContextFake{Context: this.ctx}
+	_, _ = connection.CommitWriter(txContext)
 
-	this.So(state.Tx, should.Equal, this.sqlTx)
+	this.So(txContext.tx, should.Equal, this.sqlTx)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,3 +132,10 @@ func (this *ConnectorFixture) DBHandle() *sql.DB {
 	panic("nop")
 }
 func (this *ConnectorFixture) TxHandle() *sql.Tx { return this.sqlTx }
+
+type transactionalContextFake struct {
+	context.Context
+	tx *sql.Tx
+}
+
+func (this *transactionalContextFake) Store(tx *sql.Tx) { this.tx = tx }
