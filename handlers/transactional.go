@@ -14,8 +14,8 @@ type Transactional struct {
 	logger    messaging.Logger
 }
 
-func NewTransactional(connector messaging.Connector, options ...txOption) messaging.Handler {
-	this := Transactional{connector: connector}
+func NewTransactional(connector messaging.Connector, factory handlerFactory, options ...txOption) messaging.Handler {
+	this := Transactional{connector: connector, factory: factory}
 	for _, option := range TransactionalOptions.defaults(options...) {
 		option(&this)
 	}

@@ -11,9 +11,6 @@ var TransactionalOptions txSingleton
 type txSingleton struct{}
 type txOption func(*Transactional)
 
-func (txSingleton) Factory(value handlerFactory) txOption {
-	return func(this *Transactional) { this.factory = value }
-}
 func (txSingleton) Logger(value messaging.Logger) txOption {
 	return func(this *Transactional) { this.logger = value }
 }

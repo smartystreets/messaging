@@ -58,10 +58,7 @@ func (this *TransactionFixture) Setup() {
 	this.messages = []interface{}{1, 2, 3}
 	this.sqlTx = &sql.Tx{}
 	this.monitor = &FakeMonitor{fixture: this}
-	this.handler = NewTransactional(this,
-		TransactionalOptions.Monitor(this.monitor),
-		TransactionalOptions.Factory(this.factory),
-	)
+	this.handler = NewTransactional(this, this.factory, TransactionalOptions.Monitor(this.monitor))
 }
 func (this *TransactionFixture) handle() {
 	this.handler.Handle(this.ctx, this.messages...)
