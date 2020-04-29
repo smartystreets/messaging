@@ -10,3 +10,11 @@ type Subscription struct {
 	Topics   []string
 	Handlers []messaging.Handler
 }
+
+type ShutdownStrategy int
+
+const (
+	ShutdownStrategyImmediate ShutdownStrategy = iota
+	ShutdownStrategyCurrentBatch
+	ShutdownStrategyDrain
+)
