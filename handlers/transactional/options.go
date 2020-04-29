@@ -20,7 +20,7 @@ func (singleton) Monitor(value Monitor) option {
 
 func (singleton) defaults(options ...option) []option {
 	var defaultLogger = log.New(log.Writer(), log.Prefix(), log.Flags())
-	var defaultMonitor = nopTxMonitor{}
+	var defaultMonitor = nop{}
 
 	return append([]option{
 		Options.Logger(defaultLogger),
@@ -28,9 +28,12 @@ func (singleton) defaults(options ...option) []option {
 	}, options...)
 }
 
-type nopTxMonitor struct{}
+type nop struct{}
 
-func (nopTxMonitor) BeginFailure(_ error)  {}
-func (nopTxMonitor) Commit()               {}
-func (nopTxMonitor) CommitFailure(_ error) {}
-func (nopTxMonitor) Rollback()             {}
+func (nop) BeginFailure(_ error)  {}
+func (nop) Commit()               {}
+func (nop) CommitFailure(_ error) {}
+func (nop) Rollback()             {}
+
+func (nop) Printf(_ string, _ ...interface{}) {}
+func (nop) Println(_ ...interface{})          {}

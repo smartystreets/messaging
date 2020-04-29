@@ -58,7 +58,7 @@ func (this *Fixture) Setup() {
 	this.messages = []interface{}{1, 2, 3}
 	this.sqlTx = &sql.Tx{}
 	this.monitor = &FakeMonitor{fixture: this}
-	this.handler = New(this, this.factory, Options.Monitor(this.monitor))
+	this.handler = New(this, this.factory, Options.Monitor(this.monitor), Options.Logger(nop{}))
 }
 func (this *Fixture) handle() {
 	this.handler.Handle(this.ctx, this.messages...)
