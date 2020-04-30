@@ -152,7 +152,7 @@ func (this *DispatchProcessorFixture) TestWhenListening_ReadPendingDispatchesFro
 	expected := []messaging.Dispatch{{MessageID: 1}, {MessageID: 2}, {MessageID: 3}}
 	this.loadResult = expected
 
-	this.listen(time.Millisecond)
+	this.listen(time.Millisecond * 25)
 
 	this.So(this.writeCount, should.Equal, 1)
 	this.So(this.writeContext, should.NotBeNil)
