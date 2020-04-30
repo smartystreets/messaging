@@ -8,23 +8,23 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
-type connectionManager interface {
+type connectionPool interface {
 	Current(context.Context) (messaging.Connection, error)
 	Release(messaging.Connection)
 	io.Closer
 }
 
-type defaultConnectionManager struct {
+type defaultConnectionPool struct {
 	mutex      sync.Mutex
 	connector  messaging.Connector
 	connection messaging.Connection
 }
 
-func newConnectionManager(connector messaging.Connector) connectionManager {
-	return &defaultConnectionManager{connector: connector}
+func newConnectionPool(connector messaging.Connector) connectionPool {
+	return &defaultConnectionPool{connector: connector}
 }
 
-func (this *defaultConnectionManager) Current(ctx context.Context) (_ messaging.Connection, err error) {
+func (this *defaultConnectionPool) Current(ctx context.Context) (_ messaging.Connection, err error) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
@@ -35,7 +35,7 @@ func (this *defaultConnectionManager) Current(ctx context.Context) (_ messaging.
 	this.connection, err = this.connector.Connect(ctx)
 	return this.connection, err
 }
-func (this *defaultConnectionManager) Release(connection messaging.Connection) {
+func (this *defaultConnectionPool) Release(connection messaging.Connection) {
 	if connection == nil {
 		return
 	}
@@ -50,7 +50,7 @@ func (this *defaultConnectionManager) Release(connection messaging.Connection) {
 	}
 }
 
-func (this *defaultConnectionManager) Close() error {
+func (this *defaultConnectionPool) Close() error {
 	this.mutex.Lock()
 	connection := this.connection
 	this.mutex.Unlock()

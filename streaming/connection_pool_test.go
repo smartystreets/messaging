@@ -10,15 +10,15 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
-func TestConnectionManagerFixture(t *testing.T) {
-	gunit.Run(new(ConnectionManagerFixture), t)
+func TestConnectionPoolFixture(t *testing.T) {
+	gunit.Run(new(ConnectionPoolFixture), t)
 }
 
-type ConnectionManagerFixture struct {
+type ConnectionPoolFixture struct {
 	*gunit.Fixture
 
 	ctx  context.Context
-	repo connectionManager
+	pool connectionPool
 
 	connectCount   int
 	connectContext context.Context
@@ -26,81 +26,81 @@ type ConnectionManagerFixture struct {
 	opened         []*fakeConnection
 }
 
-func (this *ConnectionManagerFixture) Setup() {
+func (this *ConnectionPoolFixture) Setup() {
 	this.ctx = context.Background()
-	this.repo = newConnectionManager(this)
+	this.pool = newConnectionPool(this)
 }
 
-func (this *ConnectionManagerFixture) TestWhenConnectFails_ItShouldReturnError() {
+func (this *ConnectionPoolFixture) TestWhenConnectFails_ItShouldReturnError() {
 	this.connectError = errors.New("")
 
-	connection, err := this.repo.Current(this.ctx)
+	connection, err := this.pool.Current(this.ctx)
 
 	this.So(connection, should.BeNil)
 	this.So(err, should.Equal, this.connectError)
 	this.So(this.connectContext, should.Equal, this.ctx)
 }
-func (this *ConnectionManagerFixture) TestWhenConnecting_ReturnUnderlyingConnection() {
-	connection, err := this.repo.Current(this.ctx)
+func (this *ConnectionPoolFixture) TestWhenConnecting_ReturnUnderlyingConnection() {
+	connection, err := this.pool.Current(this.ctx)
 
 	this.So(connection, should.Equal, this.opened[0])
 	this.So(err, should.BeNil)
 	this.So(this.connectContext, should.Equal, this.ctx)
 }
-func (this *ConnectionManagerFixture) TestWhenOpeningAConnectionTwice_ItShouldConnectOnceAndGiveSameConnectionInstance() {
-	first, _ := this.repo.Current(this.ctx)
+func (this *ConnectionPoolFixture) TestWhenOpeningAConnectionTwice_ItShouldConnectOnceAndGiveSameConnectionInstance() {
+	first, _ := this.pool.Current(this.ctx)
 
-	second, err := this.repo.Current(this.ctx)
+	second, err := this.pool.Current(this.ctx)
 
 	this.So(first, should.Equal, second)
 	this.So(err, should.BeNil)
 	this.So(this.connectCount, should.Equal, 1)
 }
 
-func (this *ConnectionManagerFixture) TestWhenReleasingAConnection_ItShouldCloseTheReleasedConnection() {
-	connection, _ := this.repo.Current(this.ctx)
+func (this *ConnectionPoolFixture) TestWhenReleasingAConnection_ItShouldCloseTheReleasedConnection() {
+	connection, _ := this.pool.Current(this.ctx)
 
-	this.repo.Release(connection)
+	this.pool.Release(connection)
 
 	this.So(this.opened[0].closeCount, should.Equal, 1)
 }
-func (this *ConnectionManagerFixture) TestWhenReleasingANilConnection_Nop() {
-	this.So(func() { this.repo.Release(nil) }, should.NotPanic)
+func (this *ConnectionPoolFixture) TestWhenReleasingANilConnection_Nop() {
+	this.So(func() { this.pool.Release(nil) }, should.NotPanic)
 }
-func (this *ConnectionManagerFixture) TestWhenReleasingCurrentConnection_ItShouldCauseCurrentToReturnNewConnection() {
-	first, _ := this.repo.Current(this.ctx)
-	this.repo.Release(first)
+func (this *ConnectionPoolFixture) TestWhenReleasingCurrentConnection_ItShouldCauseCurrentToReturnNewConnection() {
+	first, _ := this.pool.Current(this.ctx)
+	this.pool.Release(first)
 
-	second, _ := this.repo.Current(this.ctx)
+	second, _ := this.pool.Current(this.ctx)
 
 	this.So(second, should.NotBeNil)
 	this.So(first, should.NotEqual, second)
 	this.So(this.connectCount, should.Equal, 2)
 }
-func (this *ConnectionManagerFixture) TestWhenReleasingPriorConnection_ItShouldStillGiveBackCurrentConnection() {
-	first, _ := this.repo.Current(this.ctx)
-	this.repo.Release(first)
-	secondA, _ := this.repo.Current(this.ctx)
-	this.repo.Release(first) // release first again
+func (this *ConnectionPoolFixture) TestWhenReleasingPriorConnection_ItShouldStillGiveBackCurrentConnection() {
+	first, _ := this.pool.Current(this.ctx)
+	this.pool.Release(first)
+	secondA, _ := this.pool.Current(this.ctx)
+	this.pool.Release(first) // release first again
 
-	secondB, _ := this.repo.Current(this.ctx)
+	secondB, _ := this.pool.Current(this.ctx)
 
 	this.So(secondA, should.Equal, secondB)
 	this.So(secondB, should.NotBeNil)
 	this.So(this.connectCount, should.Equal, 2)
 }
 
-func (this *ConnectionManagerFixture) TestWhenClosing_ReleaseCurrentConnectionIfAny() {
-	_, _ = this.repo.Current(this.ctx)
+func (this *ConnectionPoolFixture) TestWhenClosing_ReleaseCurrentConnectionIfAny() {
+	_, _ = this.pool.Current(this.ctx)
 
-	_ = this.repo.Close()
+	_ = this.pool.Close()
 
 	this.So(this.opened[0].closeCount, should.Equal, 1)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (this *ConnectionManagerFixture) Connect(ctx context.Context) (messaging.Connection, error) {
+func (this *ConnectionPoolFixture) Connect(ctx context.Context) (messaging.Connection, error) {
 	this.connectCount++
 	this.connectContext = ctx
 	if this.connectError != nil {
@@ -111,7 +111,7 @@ func (this *ConnectionManagerFixture) Connect(ctx context.Context) (messaging.Co
 	this.opened = append(this.opened, connection)
 	return connection, nil
 }
-func (this *ConnectionManagerFixture) Close() error {
+func (this *ConnectionPoolFixture) Close() error {
 	panic("nop")
 }
 
