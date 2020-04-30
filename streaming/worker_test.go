@@ -19,13 +19,14 @@ func TestWorkerFixture(t *testing.T) {
 type WorkerFixture struct {
 	*gunit.Fixture
 
+	handler       messaging.Handler
 	softContext   context.Context
 	softShutdown  context.CancelFunc
 	hardContext   context.Context
 	hardShutdown  context.CancelFunc
 	subscription  Subscription
 	channelBuffer chan messaging.Delivery
-	worker        *defaultWorker
+	worker        messaging.Listener
 
 	readCount      int
 	maxReadCount   int
@@ -48,18 +49,22 @@ type WorkerFixture struct {
 }
 
 func (this *WorkerFixture) Setup() {
+	this.handler = this
 	this.softContext, this.softShutdown = context.WithCancel(context.Background())
 	this.hardContext, this.hardShutdown = context.WithCancel(context.Background())
-	this.subscription = Subscription{
-		Handlers:     []messaging.Handler{this},
-		BufferSize:   16,
-		MaxBatchSize: 16,
-	}
+	this.subscription = Subscription{BufferSize: 16, MaxBatchSize: 16}
 	this.initializeWorker()
 }
 func (this *WorkerFixture) initializeWorker() {
-	this.worker = newWorker(this, this.subscription, 0, this.softContext, this.hardContext)
-	this.channelBuffer = this.worker.channelBuffer
+	worker := newWorker(workerConfig{
+		Stream:       this,
+		Subscription: this.subscription,
+		Handler:      this.handler,
+		SoftContext:  this.softContext,
+		HardContext:  this.hardContext,
+	}).(*defaultWorker)
+	this.worker = worker
+	this.channelBuffer = worker.channelBuffer
 }
 
 func (this *WorkerFixture) TestWhenNewWorkerCreated_UnderlyingBufferShouldComeFromSubscription() {
@@ -67,9 +72,10 @@ func (this *WorkerFixture) TestWhenNewWorkerCreated_UnderlyingBufferShouldComeFr
 }
 
 func (this *WorkerFixture) TestWhenReadingFromUnderlyingStream_AddToBufferedChannelUntilReadFailure() {
-	this.worker.handler = nil // don't delivery to handler
+	this.handler = nil
 	this.readError = io.EOF
 	this.maxReadCount = cap(this.channelBuffer)
+	this.initializeWorker()
 
 	this.worker.Listen()
 
@@ -96,8 +102,9 @@ func (this *WorkerFixture) TestWhenReadingFromUnderlyingStream_FailOnContextClos
 	this.So(this.readCount, should.Equal, 1)
 }
 func (this *WorkerFixture) TestWhenChannelBufferIsFull_WaitUntilSpaceAvailableOrContextCancellation() {
-	this.worker.handler = nil // don't delivery to handler
+	this.handler = nil // don't delivery to handler
 	this.maxReadCount = cap(this.channelBuffer)
+	this.initializeWorker()
 
 	this.worker.Listen()
 

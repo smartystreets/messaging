@@ -9,32 +9,32 @@ import (
 )
 
 type defaultWorker struct {
-	stream                messaging.Stream
-	soft                  context.Context
-	hard                  context.Context
-	handler               messaging.Handler
-	channelBuffer         chan messaging.Delivery
-	messageBatch          []interface{}
-	outstandingDeliveries []messaging.Delivery
-	handleDelivery        bool
-	bufferTimeout         time.Duration
-	strategy              ShutdownStrategy
+	stream      messaging.Stream
+	softContext context.Context
+	hardContext context.Context
+	handler     messaging.Handler
+
+	channelBuffer  chan messaging.Delivery
+	currentBatch   []interface{}
+	unacknowledged []messaging.Delivery
+	handleDelivery bool
+	bufferTimeout  time.Duration
+	strategy       ShutdownStrategy
 }
 
-func newWorker(stream messaging.Stream, subscription Subscription, index int, soft, hard context.Context) *defaultWorker {
-	buffer := make(chan messaging.Delivery, subscription.BufferSize)
-	handler := subscription.Handlers[index]
+func newWorker(config workerConfig) messaging.Listener {
 	return &defaultWorker{
-		stream:                stream,
-		soft:                  soft,
-		hard:                  hard,
-		handler:               handler,
-		channelBuffer:         buffer,
-		messageBatch:          make([]interface{}, 0, subscription.MaxBatchSize),
-		outstandingDeliveries: make([]messaging.Delivery, 0, subscription.MaxBatchSize),
-		handleDelivery:        subscription.HandleDelivery,
-		bufferTimeout:         subscription.BufferTimeout,
-		strategy:              subscription.ShutdownStrategy,
+		stream:      config.Stream,
+		softContext: config.SoftContext,
+		hardContext: config.HardContext,
+		handler:     config.Handler,
+
+		channelBuffer:  make(chan messaging.Delivery, config.Subscription.BufferSize),
+		currentBatch:   make([]interface{}, 0, config.Subscription.MaxBatchSize),
+		unacknowledged: make([]messaging.Delivery, 0, config.Subscription.MaxBatchSize),
+		handleDelivery: config.Subscription.HandleDelivery,
+		bufferTimeout:  config.Subscription.BufferTimeout,
+		strategy:       config.Subscription.ShutdownStrategy,
 	}
 }
 
@@ -55,18 +55,17 @@ func (this *defaultWorker) readFromStream() {
 	defer close(this.channelBuffer)
 	for {
 		var delivery messaging.Delivery
-		if err := this.stream.Read(this.hard, &delivery); err != nil {
+		if err := this.stream.Read(this.hardContext, &delivery); err != nil {
 			break
 		}
 
 		select {
-		case <-this.hard.Done():
+		case <-this.hardContext.Done():
 			break
 		case this.channelBuffer <- delivery:
 		}
 	}
 }
-
 func (this *defaultWorker) deliverToHandler() {
 	if this.handler == nil {
 		return // this facilitates testing
@@ -94,38 +93,39 @@ func (this *defaultWorker) deliverToHandler() {
 		this.clearBatch()
 	}
 }
+
 func (this *defaultWorker) addToBatch(delivery messaging.Delivery) {
-	this.outstandingDeliveries = append(this.outstandingDeliveries, delivery)
+	this.unacknowledged = append(this.unacknowledged, delivery)
 	if this.handleDelivery {
-		this.messageBatch = append(this.messageBatch, delivery)
+		this.currentBatch = append(this.currentBatch, delivery)
 	} else {
-		this.messageBatch = append(this.messageBatch, delivery.Message)
+		this.currentBatch = append(this.currentBatch, delivery.Message)
 	}
 }
 func (this *defaultWorker) canBatchMore() bool {
-	return len(this.channelBuffer) > 0 && len(this.outstandingDeliveries) < cap(this.outstandingDeliveries)
+	return len(this.channelBuffer) > 0 && len(this.unacknowledged) < cap(this.unacknowledged)
 }
 func (this *defaultWorker) deliverBatch() bool {
-	this.handler.Handle(this.hard, this.messageBatch...)
-	if err := this.stream.Acknowledge(this.hard, this.outstandingDeliveries...); err != nil {
+	this.handler.Handle(this.hardContext, this.currentBatch...)
+	if err := this.stream.Acknowledge(this.hardContext, this.unacknowledged...); err != nil {
 		return false
 	}
 
 	return true
 }
 func (this *defaultWorker) clearBatch() {
-	this.messageBatch = this.messageBatch[0:0]
-	this.outstandingDeliveries = this.outstandingDeliveries[0:0]
+	this.currentBatch = this.currentBatch[0:0]
+	this.unacknowledged = this.unacknowledged[0:0]
 }
 func (this *defaultWorker) isComplete(strategy ShutdownStrategy) bool {
-	return this.strategy == strategy && !isContextAlive(this.soft)
+	return this.strategy == strategy && !isContextAlive(this.softContext)
 }
 func (this *defaultWorker) sleep() {
 	if this.bufferTimeout <= 0 {
 		return
 	}
 
-	wait, _ := context.WithTimeout(this.soft, this.bufferTimeout)
+	wait, _ := context.WithTimeout(this.softContext, this.bufferTimeout)
 	<-wait.Done()
 }
 func isContextAlive(ctx context.Context) bool {
