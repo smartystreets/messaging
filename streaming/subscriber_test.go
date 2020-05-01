@@ -3,7 +3,9 @@ package streaming
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/smartystreets/assertions/should"
 	"github.com/smartystreets/gunit"
@@ -19,8 +21,10 @@ type SubscriberFixture struct {
 
 	subscription Subscription
 	softContext  context.Context
+	softShutdown context.CancelFunc
 	subscriber   messaging.Listener
 
+	workerFactoryCount  int
 	workerFactoryConfig workerConfig
 
 	currentCount   int
@@ -33,14 +37,18 @@ type SubscriberFixture struct {
 	readerCtx   context.Context
 	readerError error
 
-	closeCount int
+	closeCount int32
 
 	streamCount   int
 	streamContext context.Context
 	streamConfig  messaging.StreamConfig
 	streamError   error
 
-	listenCount int
+	listenCount                int32
+	softShutdownWhenListening  bool
+	listenWaitForSoftShutdown  bool
+	listenSleepForHardShutdown bool
+	listenWaitForHardShutdown  bool
 }
 
 func (this *SubscriberFixture) Setup() {
@@ -50,15 +58,15 @@ func (this *SubscriberFixture) Setup() {
 		EstablishTopology: true,
 		BufferSize:        16,
 		Handlers:          []messaging.Handler{nil},
-		workerFactory:     this.workerFactory,
 	}
-	this.softContext = context.Background()
+	this.softContext, this.softShutdown = context.WithCancel(context.Background())
 	this.initializeSubscriber()
 }
 func (this *SubscriberFixture) initializeSubscriber() {
-	this.subscriber = newSubscriber(this, this.subscription, this.softContext)
+	this.subscriber = newSubscriber(this, this.subscription, this.softContext, this.workerFactory)
 }
 func (this *SubscriberFixture) workerFactory(config workerConfig) messaging.Listener {
+	this.workerFactoryCount++
 	this.workerFactoryConfig = config
 	return this
 }
@@ -96,10 +104,72 @@ func (this *SubscriberFixture) TestWhenOpeningStreamFails_ListenShouldReturn() {
 	})
 	this.So(this.closeCount, should.Equal, 1) // reader
 }
-func (this *SubscriberFixture) TestWhenListenConcludes_AllResourcesShouldBeClosed() {
+
+func (this *SubscriberFixture) TestWhenListening_EstablishWorkersAndListen() {
+	this.softShutdownWhenListening = true
+
+	this.subscriber.Listen()
+
+	this.So(this.workerFactoryCount, should.Equal, len(this.subscription.Handlers))
+	this.So(this.workerFactoryConfig, should.Resemble, workerConfig{
+		Stream:       this,
+		Subscription: this.subscription,
+		Handler:      nil,
+		SoftContext:  this.softContext,
+		HardContext:  this.subscriber.(defaultSubscriber).hardContext,
+	})
+	this.So(this.listenCount, should.Equal, len(this.subscription.Handlers))
+}
+func (this *SubscriberFixture) TestWhenListenConcludesOnShutdown_AllResourcesShouldBeClosed() {
+	this.softShutdown()
+
 	this.subscriber.Listen()
 
 	this.So(this.closeCount, should.Equal, 2) // reader and stream
+}
+func (this *SubscriberFixture) TestWhenListeningConcludesWithoutShutdown_AllResourcesShouldBeClosed() {
+	this.subscriber.Listen()
+
+	this.So(this.closeCount, should.Equal, 2) // reader and stream
+}
+func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_HardDeadlineShouldStart() {
+	this.listenWaitForHardShutdown = true
+	this.subscription.ShutdownTimeout = time.Millisecond * 5
+	this.initializeSubscriber()
+	this.softShutdown()
+
+	started := time.Now()
+	this.subscriber.Listen()
+	duration := time.Since(started)
+
+	this.So(duration, should.BeGreaterThan, this.subscription.ShutdownTimeout)
+}
+func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_ListenCanConcludeBeforeHardShutdownDeadline() {
+	this.listenSleepForHardShutdown = true
+	this.subscription.ShutdownTimeout = time.Millisecond * 10
+	this.initializeSubscriber()
+	this.softShutdown()
+
+	started := time.Now()
+	this.subscriber.Listen()
+	duration := time.Since(started)
+
+	this.So(duration, should.BeGreaterThan, this.subscription.ShutdownTimeout/2)
+	this.So(duration, should.BeLessThan, this.subscription.ShutdownTimeout)
+}
+
+func (this *SubscriberFixture) TestWhenShutdownStrategyIsImmediate_HardAndSoftShutdownContextsShouldBeTheSame() {
+	this.subscription.ShutdownStrategy = ShutdownStrategyImmediate
+	this.subscription.ShutdownTimeout = time.Millisecond * 5
+	this.softShutdownWhenListening = true
+	this.listenWaitForHardShutdown = true
+	this.initializeSubscriber()
+
+	started := time.Now()
+	this.subscriber.Listen()
+	duration := time.Since(started)
+
+	this.So(duration, should.BeLessThan, this.subscription.ShutdownTimeout)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,11 +215,25 @@ func (this *SubscriberFixture) Acknowledge(ctx context.Context, deliveries ...me
 
 // Shared between Reader and Stream (connection isn't closed by the Subscriber)
 func (this *SubscriberFixture) Close() error {
-	this.closeCount++
+	atomic.AddInt32(&this.closeCount, 1)
 	return nil
 }
 
 // Worker
 func (this *SubscriberFixture) Listen() {
-	this.listenCount++
+	atomic.AddInt32(&this.listenCount, 1)
+
+	if this.softShutdownWhenListening {
+		this.softShutdown()
+	}
+
+	if this.listenWaitForSoftShutdown {
+		<-this.softContext.Done()
+	}
+
+	if this.listenSleepForHardShutdown {
+		time.Sleep(this.subscription.ShutdownTimeout / 2)
+	} else if this.listenWaitForHardShutdown {
+		<-this.subscriber.(defaultSubscriber).hardContext.Done()
+	}
 }

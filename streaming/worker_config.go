@@ -6,6 +6,8 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
+type workerFactory func(workerConfig) messaging.Listener
+
 type workerConfig struct {
 	Stream       messaging.Stream
 	Subscription Subscription
