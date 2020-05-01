@@ -143,6 +143,8 @@ func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_HardDeadlineShouldS
 	duration := time.Since(started)
 
 	this.So(duration, should.BeGreaterThan, this.subscription.ShutdownTimeout)
+	_, hardDeadlineAlive := <-this.subscriber.(defaultSubscriber).hardContext.Done()
+	this.So(hardDeadlineAlive, should.BeFalse)
 }
 func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_ListenCanConcludeBeforeHardShutdownDeadline() {
 	this.listenSleepForHardShutdown = true

@@ -11,15 +11,15 @@ import (
 type defaultSubscriber struct {
 	pool         connectionPool
 	subscription Subscription
-	softContext  context.Context
-	hardContext  context.Context
+	softContext  context.Context // pretty please be done as soon as possible.
+	hardContext  context.Context // listen up, you're done RIGHT NOW!
 	hardShutdown context.CancelFunc
 	factory      workerFactory
+	workersDone  chan struct{}
 }
 
 func newSubscriber(pool connectionPool, subscription Subscription, softContext context.Context, factory workerFactory) messaging.Listener {
 	hardContext, hardShutdown := subscription.hardShutdown(softContext)
-
 	return defaultSubscriber{
 		pool:         pool,
 		subscription: subscription,
@@ -27,6 +27,7 @@ func newSubscriber(pool connectionPool, subscription Subscription, softContext c
 		hardContext:  hardContext,
 		hardShutdown: hardShutdown,
 		factory:      factory,
+		workersDone:  make(chan struct{}),
 	}
 }
 
@@ -48,12 +49,11 @@ func (this defaultSubscriber) Listen() {
 		return
 	}
 
-	workersCompleted := make(chan struct{})
-	go this.listen(stream, workersCompleted)
-	this.shutdown(stream, workersCompleted)
+	go this.listen(stream)
+	this.shutdown(stream)
 }
-func (this defaultSubscriber) listen(stream messaging.Stream, workersCompleted chan struct{}) {
-	defer close(workersCompleted)
+func (this defaultSubscriber) listen(stream messaging.Stream) {
+	defer close(this.workersDone)
 
 	var waiter sync.WaitGroup
 	defer waiter.Wait()
@@ -76,18 +76,18 @@ func (this defaultSubscriber) consume(index int, stream messaging.Stream) {
 	})
 	worker.Listen()
 }
-func (this defaultSubscriber) shutdown(stream io.Closer, workersCompleted chan struct{}) {
+func (this defaultSubscriber) shutdown(stream io.Closer) {
 	select {
-	case <-workersCompleted:
-		closeResource(stream)
+	case <-this.workersDone: // for some reason, workers have concluded before we expected
+		closeResource(stream) // for example, the stream might have an error or the other end might have shut it down
 	case <-this.softContext.Done():
-		closeResource(stream)
+		closeResource(stream) // stop the stream from bringing in messages and give workers some time to conclude.
 		deadline, _ := context.WithTimeout(this.hardContext, this.subscription.ShutdownTimeout)
 		select {
-		case <-workersCompleted:
-			return
+		case <-this.workersDone:
+			return // no need to wait for full deadline, workers have finished
 		case <-deadline.Done():
-			this.hardShutdown()
+			this.hardShutdown() // stop workers, they're taking too long
 		}
 	}
 }
