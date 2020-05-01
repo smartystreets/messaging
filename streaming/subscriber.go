@@ -91,9 +91,3 @@ func (this defaultSubscriber) shutdown(stream io.Closer) {
 		}
 	}
 }
-
-func closeResource(resource io.Closer) {
-	if resource != nil {
-		_ = resource.Close()
-	}
-}
