@@ -21,12 +21,6 @@ type Subscription struct {
 	shutdownTimeout   time.Duration
 }
 
-func NewSubscription(options ...subscriptionOption) Subscription {
-	this := Subscription{}
-	SubscriptionOptions.apply(options...)(&this)
-	return this
-}
-
 func (this Subscription) streamConfig() messaging.StreamConfig {
 	return messaging.StreamConfig{
 		EstablishTopology: this.establishTopology,

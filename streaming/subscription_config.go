@@ -7,6 +7,12 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
+func NewSubscription(options ...subscriptionOption) Subscription {
+	this := Subscription{}
+	SubscriptionOptions.apply(options...)(&this)
+	return this
+}
+
 var SubscriptionOptions subscriptionSingleton
 
 type subscriptionSingleton struct{}
