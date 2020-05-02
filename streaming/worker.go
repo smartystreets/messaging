@@ -29,12 +29,12 @@ func newWorker(config workerConfig) messaging.Listener {
 		hardContext: config.HardContext,
 		handler:     config.Handler,
 
-		channelBuffer:  make(chan messaging.Delivery, config.Subscription.BufferSize),
-		currentBatch:   make([]interface{}, 0, config.Subscription.MaxBatchSize),
-		unacknowledged: make([]messaging.Delivery, 0, config.Subscription.MaxBatchSize),
-		handleDelivery: config.Subscription.HandleDelivery,
-		bufferTimeout:  config.Subscription.BufferTimeout,
-		strategy:       config.Subscription.ShutdownStrategy,
+		channelBuffer:  make(chan messaging.Delivery, config.Subscription.bufferSize),
+		currentBatch:   make([]interface{}, 0, config.Subscription.maxBatchSize),
+		unacknowledged: make([]messaging.Delivery, 0, config.Subscription.maxBatchSize),
+		handleDelivery: config.Subscription.handleDelivery,
+		bufferTimeout:  config.Subscription.bufferTimeout,
+		strategy:       config.Subscription.shutdownStrategy,
 	}
 }
 

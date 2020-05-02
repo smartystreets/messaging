@@ -53,11 +53,11 @@ type SubscriberFixture struct {
 
 func (this *SubscriberFixture) Setup() {
 	this.subscription = Subscription{
-		Queue:             "queue",
-		Topics:            []string{"topic1", "topic2"},
-		EstablishTopology: true,
-		BufferSize:        16,
-		Handlers:          []messaging.Handler{nil},
+		queue:             "queue",
+		topics:            []string{"topic1", "topic2"},
+		establishTopology: true,
+		bufferSize:        16,
+		handlers:          []messaging.Handler{nil},
 	}
 	this.softContext, this.softShutdown = context.WithCancel(context.Background())
 	this.initializeSubscriber()
@@ -98,9 +98,9 @@ func (this *SubscriberFixture) TestWhenOpeningStreamFails_ListenShouldReturn() {
 	this.So(this.streamConfig, should.Resemble, messaging.StreamConfig{
 		EstablishTopology: true,
 		ExclusiveStream:   true, // single handler
-		BufferSize:        this.subscription.BufferSize,
-		Queue:             this.subscription.Queue,
-		Topics:            this.subscription.Topics,
+		BufferSize:        this.subscription.bufferSize,
+		Queue:             this.subscription.queue,
+		Topics:            this.subscription.topics,
 	})
 	this.So(this.closeCount, should.Equal, 1) // reader
 }
@@ -110,7 +110,7 @@ func (this *SubscriberFixture) TestWhenListening_EstablishWorkersAndListen() {
 
 	this.subscriber.Listen()
 
-	this.So(this.workerFactoryCount, should.Equal, len(this.subscription.Handlers))
+	this.So(this.workerFactoryCount, should.Equal, len(this.subscription.handlers))
 	this.So(this.workerFactoryConfig, should.Resemble, workerConfig{
 		Stream:       this,
 		Subscription: this.subscription,
@@ -118,7 +118,7 @@ func (this *SubscriberFixture) TestWhenListening_EstablishWorkersAndListen() {
 		SoftContext:  this.softContext,
 		HardContext:  this.subscriber.(defaultSubscriber).hardContext,
 	})
-	this.So(this.listenCount, should.Equal, len(this.subscription.Handlers))
+	this.So(this.listenCount, should.Equal, len(this.subscription.handlers))
 }
 func (this *SubscriberFixture) TestWhenListenConcludesOnShutdown_AllResourcesShouldBeClosed() {
 	this.softShutdown()
@@ -134,7 +134,7 @@ func (this *SubscriberFixture) TestWhenListeningConcludesWithoutShutdown_AllReso
 }
 func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_HardDeadlineShouldStart() {
 	this.listenWaitForHardShutdown = true
-	this.subscription.ShutdownTimeout = time.Millisecond * 5
+	this.subscription.shutdownTimeout = time.Millisecond * 5
 	this.initializeSubscriber()
 	this.softShutdown()
 
@@ -142,13 +142,13 @@ func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_HardDeadlineShouldS
 	this.subscriber.Listen()
 	duration := time.Since(started)
 
-	this.So(duration, should.BeGreaterThan, this.subscription.ShutdownTimeout)
+	this.So(duration, should.BeGreaterThan, this.subscription.shutdownTimeout)
 	_, hardDeadlineAlive := <-this.subscriber.(defaultSubscriber).hardContext.Done()
 	this.So(hardDeadlineAlive, should.BeFalse)
 }
 func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_ListenCanConcludeBeforeHardShutdownDeadline() {
 	this.listenSleepForHardShutdown = true
-	this.subscription.ShutdownTimeout = time.Millisecond * 10
+	this.subscription.shutdownTimeout = time.Millisecond * 10
 	this.initializeSubscriber()
 	this.softShutdown()
 
@@ -156,13 +156,13 @@ func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_ListenCanConcludeBe
 	this.subscriber.Listen()
 	duration := time.Since(started)
 
-	this.So(duration, should.BeGreaterThan, this.subscription.ShutdownTimeout/2)
-	this.So(duration, should.BeLessThan, this.subscription.ShutdownTimeout)
+	this.So(duration, should.BeGreaterThan, this.subscription.shutdownTimeout/2)
+	this.So(duration, should.BeLessThan, this.subscription.shutdownTimeout)
 }
 
 func (this *SubscriberFixture) TestWhenShutdownStrategyIsImmediate_HardAndSoftShutdownContextsShouldBeTheSame() {
-	this.subscription.ShutdownStrategy = ShutdownStrategyImmediate
-	this.subscription.ShutdownTimeout = time.Millisecond * 5
+	this.subscription.shutdownStrategy = ShutdownStrategyImmediate
+	this.subscription.shutdownTimeout = time.Millisecond * 5
 	this.softShutdownWhenListening = true
 	this.listenWaitForHardShutdown = true
 	this.initializeSubscriber()
@@ -171,7 +171,7 @@ func (this *SubscriberFixture) TestWhenShutdownStrategyIsImmediate_HardAndSoftSh
 	this.subscriber.Listen()
 	duration := time.Since(started)
 
-	this.So(duration, should.BeLessThan, this.subscription.ShutdownTimeout)
+	this.So(duration, should.BeLessThan, this.subscription.shutdownTimeout)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -234,7 +234,7 @@ func (this *SubscriberFixture) Listen() {
 	}
 
 	if this.listenSleepForHardShutdown {
-		time.Sleep(this.subscription.ShutdownTimeout / 2)
+		time.Sleep(this.subscription.shutdownTimeout / 2)
 	} else if this.listenWaitForHardShutdown {
 		<-this.subscriber.(defaultSubscriber).hardContext.Done()
 	}

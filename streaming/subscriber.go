@@ -57,9 +57,9 @@ func (this defaultSubscriber) listen(stream messaging.Stream) {
 
 	var waiter sync.WaitGroup
 	defer waiter.Wait()
-	waiter.Add(len(this.subscription.Handlers))
+	waiter.Add(len(this.subscription.handlers))
 
-	for i := range this.subscription.Handlers {
+	for i := range this.subscription.handlers {
 		go func(index int) {
 			defer waiter.Done()
 			this.consume(index, stream)
@@ -70,7 +70,7 @@ func (this defaultSubscriber) consume(index int, stream messaging.Stream) {
 	worker := this.factory(workerConfig{
 		Stream:       stream,
 		Subscription: this.subscription,
-		Handler:      this.subscription.Handlers[index],
+		Handler:      this.subscription.handlers[index],
 		SoftContext:  this.softContext,
 		HardContext:  this.hardContext,
 	})
@@ -82,7 +82,7 @@ func (this defaultSubscriber) shutdown(stream io.Closer) {
 		closeResource(stream) // for example, the stream might have an error or the other end might have shut it down
 	case <-this.softContext.Done():
 		closeResource(stream) // stop the stream from bringing in messages and give workers some time to conclude.
-		deadline, _ := context.WithTimeout(this.hardContext, this.subscription.ShutdownTimeout)
+		deadline, _ := context.WithTimeout(this.hardContext, this.subscription.shutdownTimeout)
 		select {
 		case <-this.workersDone:
 			return // no need to wait for full deadline, workers have finished
