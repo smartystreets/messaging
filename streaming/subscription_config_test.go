@@ -23,11 +23,11 @@ func (this *SubscriptionConfigFixture) Setup() {
 }
 
 func (this *SubscriptionConfigFixture) TestWhenNoHandlersAreConfigured_ItShouldPanic() {
-	this.So(func() { NewSubscription() }, should.Panic)
+	this.So(func() { NewSubscription("queue") }, should.Panic)
 }
 
 func (this *SubscriptionConfigFixture) TestWhenLegacyHandlerIsProvided_HandlerShouldBeAdapted() {
-	subscription := NewSubscription(SubscriptionOptions.AddLegacyWorkers(this))
+	subscription := NewSubscription("queue", SubscriptionOptions.AddLegacyWorkers(this))
 
 	subscription.handlers[0].Handle(context.Background(), 0, 1, 2)
 
@@ -38,10 +38,9 @@ func (this *SubscriptionConfigFixture) Handle(messages ...interface{}) {
 }
 
 func (this *SubscriptionConfigFixture) TestWhenValuesAreProvided_SubscriptionShouldHaveValues() {
-	subscription := NewSubscription(
-		SubscriptionOptions.AddWorkers(nil),
+	subscription := NewSubscription("queue",
 		SubscriptionOptions.Name("name"),
-		SubscriptionOptions.Queue("queue"),
+		SubscriptionOptions.AddWorkers(nil),
 		SubscriptionOptions.Topics("topic1", "topic2"),
 		SubscriptionOptions.MaxBatchSize(1),
 		SubscriptionOptions.BufferSize(2),
@@ -70,11 +69,13 @@ func (this *SubscriptionConfigFixture) TestWhenUnrecognizedShutdownStrategyIsPro
 	unknown := ShutdownStrategy(42)
 
 	this.So(func() {
-		NewSubscription(SubscriptionOptions.AddWorkers(nil), SubscriptionOptions.ShutdownStrategy(unknown, 0))
+		NewSubscription("queue",
+			SubscriptionOptions.AddWorkers(nil),
+			SubscriptionOptions.ShutdownStrategy(unknown, 0))
 	}, should.Panic)
 }
 func (this *SubscriptionConfigFixture) TestWhenShutdownStrategyIsImmediate_TimeoutIsSetToZero() {
-	subscription := NewSubscription(
+	subscription := NewSubscription("queue",
 		SubscriptionOptions.AddWorkers(nil),
 		SubscriptionOptions.ShutdownStrategy(ShutdownStrategyImmediate, 42))
 
@@ -83,7 +84,7 @@ func (this *SubscriptionConfigFixture) TestWhenShutdownStrategyIsImmediate_Timeo
 }
 
 func (this *SubscriptionConfigFixture) TestWhenNumberOfHandlersIsLargerThanBufferSize_BufferSizeSetToNumberOfHandlers() {
-	subscription := NewSubscription(
+	subscription := NewSubscription("queue",
 		SubscriptionOptions.AddWorkers(nil, nil, nil, nil),
 		SubscriptionOptions.BufferSize(2))
 
