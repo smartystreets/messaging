@@ -17,9 +17,8 @@ func New(connector messaging.Connector, factory handlerFunc, options ...option) 
 }
 
 type Monitor interface {
-	BeginFailure(error)
-	Commit()
-	CommitFailure(error)
+	Begin(error)
+	Commit(error)
 	Rollback()
 }
 

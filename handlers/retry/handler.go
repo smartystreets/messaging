@@ -43,7 +43,7 @@ func (this handler) finally(ctx context.Context, attempt int, err interface{}) b
 
 func (this handler) handleFailure(ctx context.Context, attempt int, err interface{}) {
 	this.logFailure(attempt, err)
-	this.panicOnTooManyAttempts(attempt, err)
+	this.panicOnTooManyAttempts(attempt)
 	this.sleep(ctx)
 }
 func (this handler) logFailure(attempt int, err interface{}) {
@@ -53,7 +53,7 @@ func (this handler) logFailure(attempt int, err interface{}) {
 		this.logger.Printf("[INFO] Attempt [%d] operation failure [%s].", attempt, err)
 	}
 }
-func (this handler) panicOnTooManyAttempts(attempt int, err interface{}) {
+func (this handler) panicOnTooManyAttempts(attempt int) {
 	if this.maxAttempts > 0 && attempt >= this.maxAttempts {
 		panic(ErrMaxRetriesExceeded)
 	}

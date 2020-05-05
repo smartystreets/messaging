@@ -31,7 +31,6 @@ type nop struct{}
 func (nop) Printf(_ string, _ ...interface{}) {}
 func (nop) Println(_ ...interface{})          {}
 
-func (nop) BeginFailure(_ error)  {}
-func (nop) Commit()               {}
-func (nop) CommitFailure(_ error) {}
-func (nop) Rollback()             {}
+func (nop) Begin(_ error)  {}
+func (nop) Commit(_ error) {}
+func (nop) Rollback()      {}

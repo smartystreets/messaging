@@ -141,10 +141,10 @@ func (this *Fixture) CommitWriter(ctx context.Context) (messaging.CommitWriter, 
 	ctx.(*transactionalContext).Store(this.sqlTx)
 	return this, this.commitWriterError
 }
-func (this *Fixture) Reader(ctx context.Context) (messaging.Reader, error) {
+func (this *Fixture) Reader(_ context.Context) (messaging.Reader, error) {
 	panic("nop")
 }
-func (this *Fixture) Writer(ctx context.Context) (messaging.Writer, error) {
+func (this *Fixture) Writer(_ context.Context) (messaging.Writer, error) {
 	panic("nop")
 }
 
@@ -156,7 +156,7 @@ func (this *Fixture) Rollback() error {
 	this.rollbackCount++
 	return this.rollbackError
 }
-func (this *Fixture) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {
+func (this *Fixture) Write(_ context.Context, _ ...messaging.Dispatch) (int, error) {
 	panic("nop")
 }
 
@@ -180,11 +180,14 @@ func (this *Fixture) Handle(ctx context.Context, messages ...interface{}) {
 
 type FakeMonitor struct{ fixture *Fixture }
 
-func (this *FakeMonitor) BeginFailure(err error) {
+func (this *FakeMonitor) Begin(err error) {
 	this.fixture.monitorBeginErrors = append(this.fixture.monitorBeginErrors, err)
 }
 func (this *FakeMonitor) Rollback() { this.fixture.monitorRollbackCount++ }
-func (this *FakeMonitor) Commit()   { this.fixture.monitorCommitCount++ }
-func (this *FakeMonitor) CommitFailure(err error) {
+func (this *FakeMonitor) Commit(err error) {
+	if err == nil {
+		this.fixture.monitorCommitCount++
+	}
+
 	this.fixture.monitorCommitErrors = append(this.fixture.monitorCommitErrors, err)
 }

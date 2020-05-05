@@ -18,7 +18,7 @@ func (this handler) Handle(ctx context.Context, messages ...interface{}) {
 	connection, err := this.connector.Connect(ctx)
 	if err != nil {
 		this.logger.Printf("[WARN] Unable to begin transaction [%s].", err)
-		this.monitor.BeginFailure(err)
+		this.monitor.Begin(err)
 		panic(err)
 	}
 
@@ -27,20 +27,21 @@ func (this handler) Handle(ctx context.Context, messages ...interface{}) {
 	writer, err := connection.CommitWriter(txCtx)
 	if err != nil {
 		this.logger.Printf("[WARN] Unable to begin transaction [%s].", err)
-		this.monitor.BeginFailure(err)
+		this.monitor.Begin(err)
 		panic(err)
 	}
 
+	this.monitor.Begin(nil)
 	txCtx.Writer = writer
 	handler := this.factory(txCtx.State())
 	handler.Handle(ctx, messages...)
 	if err := writer.Commit(); err != nil {
 		this.logger.Printf("[WARN] Unable to commit transaction [%s].", err)
-		this.monitor.CommitFailure(err)
+		this.monitor.Commit(err)
 		panic(err)
 	}
 
-	this.monitor.Commit()
+	this.monitor.Commit(nil)
 }
 func (this handler) finally(ctx *transactionalContext, err interface{}) {
 	defer func() { _ = ctx.Close() }()
