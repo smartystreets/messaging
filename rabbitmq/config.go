@@ -24,6 +24,7 @@ type configuration struct {
 	Dialer               netDialer
 	Connector            adapter.Connector
 	Logger               messaging.Logger
+	Monitor              Monitor
 	Now                  func() time.Time
 	TopologyFailurePanic bool
 }
@@ -57,6 +58,9 @@ func (singleton) PanicOnTopologyError(value bool) option {
 func (singleton) Logger(value messaging.Logger) option {
 	return func(this *configuration) { this.Logger = value }
 }
+func (singleton) Monitor(value Monitor) option {
+	return func(this *configuration) { this.Monitor = value }
+}
 func (singleton) Now(value func() time.Time) option {
 	return func(this *configuration) { this.Now = value }
 }
@@ -84,6 +88,7 @@ func (singleton) defaults(options ...option) []option {
 	const defaultTopologyFailurePanic = true
 	var defaultNow = time.Now
 	var defaultLogger = nop{}
+	var defaultMonitor = nop{}
 	var defaultTLS = &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		PreferServerCipherSuites: true,
@@ -106,6 +111,7 @@ func (singleton) defaults(options ...option) []option {
 		Options.Connector(adapter.New()),
 		Options.PanicOnTopologyError(defaultTopologyFailurePanic),
 		Options.Logger(defaultLogger),
+		Options.Monitor(defaultMonitor),
 		Options.Now(defaultNow),
 	}, options...)
 }

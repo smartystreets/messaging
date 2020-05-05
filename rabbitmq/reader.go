@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -105,8 +104,3 @@ func (this *defaultReader) Close() error {
 	this.streams = this.streams[0:0]
 	return this.inner.Close()
 }
-
-var (
-	ErrAlreadyExclusive = errors.New("unable to open additional stream, an exclusive stream already exists")
-	ErrMultipleStreams  = errors.New("unable to open exclusive stream, another stream already exists")
-)

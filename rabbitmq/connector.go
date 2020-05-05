@@ -2,18 +2,12 @@ package rabbitmq
 
 import (
 	"context"
-	"crypto/tls"
 	"net/url"
 	"sync"
 
 	"github.com/smartystreets/messaging/v3"
 	"github.com/smartystreets/messaging/v3/rabbitmq/adapter"
 )
-
-type BrokerEndpoint struct {
-	Address   url.URL
-	TLSConfig *tls.Config
-}
 
 type defaultConnector struct {
 	inner  adapter.Connector
