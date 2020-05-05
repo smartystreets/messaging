@@ -141,7 +141,7 @@ func (this *DispatchProcessorFixture) TestWhenClosingDuringSleepRetry_SleepIsCut
 	this.confirmError = errors.New("") // sleep begins on error for 1 min
 	this.channel <- messaging.Dispatch{}
 
-	start := time.Now()
+	start := time.Now().UTC()
 	this.listen(time.Millisecond * 3)
 	completed := time.Since(start)
 

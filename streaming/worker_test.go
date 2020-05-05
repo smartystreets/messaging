@@ -246,7 +246,7 @@ func (this *WorkerFixture) TestWhenRequestingShutdownAndStrategyIsCurrentBatch_D
 
 	this.So(this.handleCount, should.Equal, 1)
 	this.So(this.acknowledgeCount, should.Equal, 1)
-	this.So(this.acknowledgeTimestamp[0], should.HappenWithin, time.Millisecond*25, time.Now()) // 1-second sleep is skipped
+	this.So(this.acknowledgeTimestamp[0], should.HappenWithin, time.Millisecond*25, time.Now().UTC()) // 1-second sleep is skipped
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -272,7 +272,7 @@ func (this *WorkerFixture) Read(ctx context.Context, delivery *messaging.Deliver
 	return nil
 }
 func (this *WorkerFixture) Acknowledge(ctx context.Context, deliveries ...messaging.Delivery) error {
-	this.acknowledgeTimestamp = append(this.acknowledgeTimestamp, time.Now())
+	this.acknowledgeTimestamp = append(this.acknowledgeTimestamp, time.Now().UTC())
 	this.acknowledgeCount++
 	this.acknowledgeContext = ctx
 	this.acknowledgeDeliveries = append(this.acknowledgeDeliveries, deliveries...)
@@ -281,7 +281,7 @@ func (this *WorkerFixture) Acknowledge(ctx context.Context, deliveries ...messag
 func (this *WorkerFixture) Close() error { panic("nop") }
 
 func (this *WorkerFixture) Handle(ctx context.Context, messages ...interface{}) {
-	this.handleTimestamp = time.Now()
+	this.handleTimestamp = time.Now().UTC()
 	this.handleCount++
 	this.handleCtx = ctx
 	this.handleMessages = append(this.handleMessages, messages...)

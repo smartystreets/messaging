@@ -138,7 +138,7 @@ func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_HardDeadlineShouldS
 	this.initializeSubscriber()
 	this.softShutdown()
 
-	started := time.Now()
+	started := time.Now().UTC()
 	this.subscriber.Listen()
 	duration := time.Since(started)
 
@@ -152,7 +152,7 @@ func (this *SubscriberFixture) TestWhenSoftShutdownIsInvoked_ListenCanConcludeBe
 	this.initializeSubscriber()
 	this.softShutdown()
 
-	started := time.Now()
+	started := time.Now().UTC()
 	this.subscriber.Listen()
 	duration := time.Since(started)
 
@@ -167,7 +167,7 @@ func (this *SubscriberFixture) TestWhenShutdownStrategyIsImmediate_HardAndSoftSh
 	this.listenWaitForHardShutdown = true
 	this.initializeSubscriber()
 
-	started := time.Now()
+	started := time.Now().UTC()
 	this.subscriber.Listen()
 	duration := time.Since(started)
 
