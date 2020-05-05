@@ -22,6 +22,9 @@ type configuration struct {
 	Deserializers map[string]Deserializer
 	Serializer    Serializer
 
+	Logger  messaging.Logger
+	Monitor Monitor
+
 	Connector messaging.Connector
 	Encoder   DispatchEncoder
 	Decoder   DeliveryDecoder
@@ -54,6 +57,12 @@ func (singleton) ReadTypes(value map[string]reflect.Type) option {
 func (singleton) WriteTypes(value map[reflect.Type]string) option {
 	return func(this *configuration) { this.WriteTypes = value }
 }
+func (singleton) Logger(value messaging.Logger) option {
+	return func(this *configuration) { this.Logger = value }
+}
+func (singleton) Monitor(value Monitor) option {
+	return func(this *configuration) { this.Monitor = value }
+}
 
 func (singleton) apply(options ...option) option {
 	return func(this *configuration) {
@@ -71,10 +80,22 @@ func (singleton) apply(options ...option) option {
 }
 func (singleton) defaults(options ...option) []option {
 	var defaultSerializer = defaultSerializer{}
+	var defaultLogger = nop{}
+	var defaultMonitor = nop{}
 	const emptyContentType = ""
 
 	return append([]option{
+		Options.Logger(defaultLogger),
+		Options.Monitor(defaultMonitor),
 		Options.Serializer(defaultSerializer),
 		Options.AddDeserializer(defaultSerializer, defaultSerializer.ContentType(), emptyContentType),
 	}, options...)
 }
+
+type nop struct{}
+
+func (nop) Printf(_ string, _ ...interface{}) {}
+func (nop) Println(_ ...interface{})          {}
+
+func (nop) MessageEncoded(_ error) {}
+func (nop) MessageDecoded(_ error) {}

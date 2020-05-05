@@ -22,6 +22,11 @@ type DispatchEncoder interface {
 	Encode(*messaging.Dispatch) error
 }
 
+type Monitor interface {
+	MessageEncoded(error)
+	MessageDecoded(error)
+}
+
 var (
 	ErrSerializationFailure        = errors.New("serialization failure")
 	ErrUnknownContentType          = errors.New("the content type provided was not understood")
