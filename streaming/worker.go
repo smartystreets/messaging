@@ -20,6 +20,7 @@ type defaultWorker struct {
 	handleDelivery bool
 	bufferTimeout  time.Duration
 	strategy       ShutdownStrategy
+	bufferLength   int
 }
 
 func newWorker(config workerConfig) messaging.Listener {
@@ -103,7 +104,15 @@ func (this *defaultWorker) addToBatch(delivery messaging.Delivery) {
 	}
 }
 func (this *defaultWorker) canBatchMore() bool {
-	return len(this.channelBuffer) > 0 && len(this.unacknowledged) < cap(this.unacknowledged)
+	return this.measureBufferLength() > 0 && len(this.unacknowledged) < cap(this.unacknowledged)
+}
+func (this *defaultWorker) measureBufferLength() int {
+	if this.bufferLength == 0 {
+		this.bufferLength = len(this.channelBuffer)
+	} else {
+		this.bufferLength--
+	}
+	return this.bufferLength
 }
 func (this *defaultWorker) deliverBatch() bool {
 	this.handler.Handle(this.hardContext, this.currentBatch...)
@@ -123,6 +132,10 @@ func (this *defaultWorker) isComplete(strategy ShutdownStrategy) bool {
 func (this *defaultWorker) sleep() {
 	if this.bufferTimeout <= 0 {
 		return
+	}
+
+	if this.bufferLength > 0 {
+		return // more work to do
 	}
 
 	wait, _ := context.WithTimeout(this.softContext, this.bufferTimeout)

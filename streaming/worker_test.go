@@ -34,7 +34,7 @@ type WorkerFixture struct {
 	readDeliveries []messaging.Delivery
 	readError      error
 
-	acknowledgeTimestamp  time.Time
+	acknowledgeTimestamp  []time.Time
 	acknowledgeCount      int
 	acknowledgeContext    context.Context
 	acknowledgeDeliveries []messaging.Delivery
@@ -190,7 +190,7 @@ func (this *WorkerFixture) TestWhenAcknowledgementFails_ListeningConcludesWithou
 	this.So(this.acknowledgeCount, should.Equal, 1)
 	this.So(len(this.channelBuffer), should.Equal, 1)
 }
-func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_SleepAfterAcknowledgement() {
+func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_SleepAfterAcknowledgementAndNoMoreWork() {
 	const timeout = time.Millisecond * 5
 	this.readError = io.EOF
 	this.subscription.bufferTimeout = timeout
@@ -200,7 +200,24 @@ func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_SleepAfterAc
 
 	this.worker.Listen()
 
-	this.So(this.acknowledgeTimestamp, should.HappenBefore, time.Now().Add(-timeout))
+	this.So(time.Since(this.acknowledgeTimestamp[0]), should.BeBetween, timeout, timeout*2)
+}
+func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_DoNotSleepAfterAcknowledgementIfMoreWorkAvailable() {
+	const timeout = time.Millisecond * 5
+	this.readError = io.EOF
+	this.subscription.maxBatchSize = 1
+	this.subscription.bufferTimeout = timeout
+	this.initializeWorker()
+
+	this.channelBuffer <- messaging.Delivery{Message: 1} // first batch
+	this.channelBuffer <- messaging.Delivery{Message: 1} // second bath
+
+	this.worker.Listen()
+
+	duration := this.acknowledgeTimestamp[0].Sub(this.acknowledgeTimestamp[1])
+	this.So(duration, should.BeLessThan, timeout) // no sleep delay between first and second acknowledgements
+	this.So(time.Since(this.acknowledgeTimestamp[1]), should.BeBetween, timeout, timeout*2)
+	this.So(this.acknowledgeCount, should.Equal, 2)
 }
 
 func (this *WorkerFixture) TestWhenRequestingShutdownAndStrategyIsImmediate_DoNotDeliveryMoreToHandler() {
@@ -229,7 +246,7 @@ func (this *WorkerFixture) TestWhenRequestingShutdownAndStrategyIsCurrentBatch_D
 
 	this.So(this.handleCount, should.Equal, 1)
 	this.So(this.acknowledgeCount, should.Equal, 1)
-	this.So(this.acknowledgeTimestamp, should.HappenWithin, time.Millisecond*25, time.Now()) // 1-second sleep is skipped
+	this.So(this.acknowledgeTimestamp[0], should.HappenWithin, time.Millisecond*25, time.Now()) // 1-second sleep is skipped
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,7 +272,7 @@ func (this *WorkerFixture) Read(ctx context.Context, delivery *messaging.Deliver
 	return nil
 }
 func (this *WorkerFixture) Acknowledge(ctx context.Context, deliveries ...messaging.Delivery) error {
-	this.acknowledgeTimestamp = time.Now()
+	this.acknowledgeTimestamp = append(this.acknowledgeTimestamp, time.Now())
 	this.acknowledgeCount++
 	this.acknowledgeContext = ctx
 	this.acknowledgeDeliveries = append(this.acknowledgeDeliveries, deliveries...)
