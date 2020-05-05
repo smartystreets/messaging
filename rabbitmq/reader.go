@@ -19,6 +19,8 @@ type defaultReader struct {
 	config  configuration
 	mutex   sync.Mutex
 	counter uint64
+
+	hasExclusiveStream bool
 }
 
 func newReader(inner adapter.Channel, config configuration) messaging.Reader {
@@ -28,8 +30,11 @@ func (this *defaultReader) Stream(_ context.Context, config messaging.StreamConf
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
+	if this.hasExclusiveStream {
+		return nil, ErrAlreadyExclusive
+	}
 	if config.ExclusiveStream && len(this.streams) > 0 {
-		return nil, ErrMultipleStreams // TODO: what if the first stream is exclusive and subsequent aren't?
+		return nil, ErrMultipleStreams
 	}
 
 	if err := establishTopology(this.inner, config); err != nil {
@@ -52,6 +57,7 @@ func (this *defaultReader) Stream(_ context.Context, config messaging.StreamConf
 	stream := newStream(this.inner, deliveries, streamID, config.ExclusiveStream)
 	this.counter++
 	this.streams = append(this.streams, stream)
+	this.hasExclusiveStream = this.hasExclusiveStream || config.ExclusiveStream
 	return stream, nil
 }
 func establishTopology(channel adapter.Channel, config messaging.StreamConfig) error {
@@ -100,4 +106,7 @@ func (this *defaultReader) Close() error {
 	return this.inner.Close()
 }
 
-var ErrMultipleStreams = errors.New("unable to open an exclusive stream, another stream already exists")
+var (
+	ErrAlreadyExclusive = errors.New("unable to open additional stream, an exclusive stream already exists")
+	ErrMultipleStreams  = errors.New("unable to open exclusive stream, another stream already exists")
+)

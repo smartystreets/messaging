@@ -83,6 +83,14 @@ func (this *ReaderFixture) TestWhenEstablishingAnExclusiveStreamWithExisting_Ret
 	this.So(stream, should.BeNil)
 	this.So(err, should.Equal, ErrMultipleStreams)
 }
+func (this *ReaderFixture) TestWhenExclusiveStreamAlreadyEstablishedAndSecondStreamDesired_ReturnError() {
+	_, _ = this.reader.Stream(context.Background(), messaging.StreamConfig{ExclusiveStream: true})
+
+	stream, err := this.reader.Stream(context.Background(), messaging.StreamConfig{ExclusiveStream: false})
+
+	this.So(stream, should.BeNil)
+	this.So(err, should.Equal, ErrAlreadyExclusive)
+}
 
 func (this *ReaderFixture) TestWhenEstablishingTopologyDeclareQueueFails_CloseChannelAndReturnError() {
 	this.declareQueueError = errors.New("")
