@@ -1,7 +1,6 @@
 package retry
 
 import (
-	"log"
 	"time"
 
 	"github.com/smartystreets/messaging/v3"
@@ -32,8 +31,8 @@ func (singleton) defaults(options ...option) []option {
 	const defaultRetryTimeout = time.Second * 5
 	const defaultMaxAttempts = 1<<32 - 1
 	const defaultLogStackTrace = true
-	var defaultLogger = log.New(log.Writer(), log.Prefix(), log.Flags())
-	var defaultMonitor = nopRetryMonitor{}
+	var defaultLogger = nop{}
+	var defaultMonitor = nop{}
 
 	return append([]option{
 		Options.Timeout(defaultRetryTimeout),
@@ -44,6 +43,9 @@ func (singleton) defaults(options ...option) []option {
 	}, options...)
 }
 
-type nopRetryMonitor struct{}
+type nop struct{}
 
-func (nopRetryMonitor) Attempt(_ int, _ interface{}) {}
+func (nop) Printf(_ string, _ ...interface{}) {}
+func (nop) Println(_ ...interface{})          {}
+
+func (nop) Attempt(_ int, _ interface{}) {}

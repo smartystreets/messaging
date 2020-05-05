@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"crypto/tls"
-	"log"
 	"net"
 	"net/url"
 	"time"
@@ -84,7 +83,7 @@ func (singleton) defaults(options ...option) []option {
 	const defaultAddress = "amqp://guest:guest@127.0.0.1:5672/"
 	const defaultTopologyFailurePanic = true
 	var defaultNow = time.Now
-	var defaultLogger = log.New(log.Writer(), log.Prefix(), log.Flags())
+	var defaultLogger = nop{}
 	var defaultTLS = &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		PreferServerCipherSuites: true,
@@ -120,3 +119,8 @@ func (this configuration) defaultTLSClient(conn net.Conn, config *tls.Config) tl
 func (this configuration) defaultDialer() netDialer {
 	return newTLSDialer(&net.Dialer{}, this)
 }
+
+type nop struct{}
+
+func (nop) Printf(_ string, _ ...interface{}) {}
+func (nop) Println(_ ...interface{})          {}
