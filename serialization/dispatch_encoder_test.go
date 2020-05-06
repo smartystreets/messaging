@@ -62,7 +62,7 @@ func (this *DispatchEncoderFixture) TestWhenEncodingUnknownMessageType_ReturnErr
 
 	err := this.encoder.Encode(&this.dispatch)
 
-	this.So(errors.Is(err, ErrSerializationFailure), should.BeTrue)
+	this.So(err, should.Wrap, ErrSerializationFailure)
 	this.So(this.dispatch.Payload, should.BeNil)
 	this.So(this.serializeCalls, should.BeZeroValue)
 }
@@ -73,7 +73,7 @@ func (this *DispatchEncoderFixture) TestWhenSerializationFails_ReturnError() {
 
 	err := this.encoder.Encode(&this.dispatch)
 
-	this.So(errors.Is(err, ErrSerializationFailure), should.BeTrue)
+	this.So(err, should.Wrap, ErrSerializationFailure)
 	this.So(this.dispatch.Payload, should.BeNil)
 	this.So(this.serializeCalls, should.Equal, 1)
 	this.So(this.serializeInstance, should.Equal, this.dispatch.Message)

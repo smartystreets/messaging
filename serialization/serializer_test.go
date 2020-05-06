@@ -1,7 +1,6 @@
 package serialization
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/smartystreets/assertions/should"
@@ -36,7 +35,7 @@ func (this *SerializerFixture) TestWhenSerializationFails_ExpectedErrorReturned(
 	payload, err := this.serializer.Serialize(source)
 
 	this.So(payload, should.BeNil)
-	this.So(errors.Is(err, ErrSerializeUnsupportedType), should.BeTrue)
+	this.So(err, should.Wrap, ErrSerializeUnsupportedType)
 }
 
 func (this *SerializerFixture) TestWhenDeserializationFails_ExpectedErrorReturned() {
@@ -44,5 +43,5 @@ func (this *SerializerFixture) TestWhenDeserializationFails_ExpectedErrorReturne
 
 	err := this.serializer.Deserialize([]byte("Hello"), &target)
 
-	this.So(errors.Is(err, ErrDeserializeMalformedPayload), should.BeTrue)
+	this.So(err, should.Wrap, ErrDeserializeMalformedPayload)
 }
