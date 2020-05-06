@@ -18,3 +18,10 @@ type transactionalContext interface {
 	context.Context
 	Store(tx *sql.Tx) // used by transactional handler
 }
+
+type Monitor interface {
+	MessageReceived(count int)
+	MessageStored(count int)
+	MessagePublished(count int)
+	MessageConfirmed(count int)
+}

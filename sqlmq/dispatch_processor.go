@@ -15,6 +15,8 @@ type dispatchProcessor struct {
 	retryWait time.Duration
 	store     messageStore
 	sender    messaging.Writer
+	logger    messaging.Logger
+	monitor   Monitor
 
 	buffer   []messaging.Dispatch
 	latestID uint64
@@ -30,6 +32,8 @@ func newDispatchProcessor(config configuration) messaging.ListenCloser {
 		retryWait: config.Sleep,
 		store:     config.MessageStore,
 		sender:    config.Sender,
+		logger:    config.Logger,
+		monitor:   config.Monitor,
 	}
 }
 
@@ -63,8 +67,11 @@ func (this *dispatchProcessor) readPending() bool {
 
 	for _, dispatch := range dispatches {
 		this.latestID = dispatch.MessageID
-		// dispatch.Topic = dispatch.MessageType // storage should do this
 		this.channel <- dispatch
+	}
+
+	if err != nil {
+		this.logger.Printf("[WARN] Unable to load persisted messages from durable storage [%s].", err)
 	}
 
 	return err == nil
@@ -81,9 +88,11 @@ func (this *dispatchProcessor) write() bool {
 		}
 
 		if err := this.store.Confirm(this.ctx, this.buffer); err != nil {
+			this.logger.Printf("[WARN] Unable to mark messages as dispatched in durable storage [%s].", err)
 			return false
 		}
 
+		this.monitor.MessageConfirmed(len(this.buffer))
 		this.clearBuffer()
 	}
 }
@@ -115,6 +124,7 @@ func (this *dispatchProcessor) writeBufferToSender() bool {
 		return false
 	}
 
+	this.monitor.MessagePublished(len(this.buffer))
 	this.sent = true
 	return true
 }

@@ -42,7 +42,7 @@ func (singleton) apply(options ...option) option {
 	}
 }
 func (singleton) defaults(options ...option) []option {
-	var defaultLogger = log.New(log.Writer(), log.Prefix(), log.Flags())
+	var defaultLogger = log.New(log.Writer(), log.Prefix(), log.Flags()) // TODO
 
 	return append([]option{
 		Options.Logger(defaultLogger),

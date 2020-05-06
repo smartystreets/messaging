@@ -19,6 +19,8 @@ type configuration struct {
 	SQLTxOptions  sql.TxOptions
 	Now           func() time.Time
 	Sleep         time.Duration
+	Logger        messaging.Logger
+	Monitor       Monitor
 
 	MessageStore messageStore
 	Sender       messaging.Writer
@@ -69,6 +71,12 @@ func (singleton) MessageStore(value messageStore) option {
 func (singleton) MessageSender(value messaging.Writer) option {
 	return func(this *configuration) { this.Sender = value }
 }
+func (singleton) Logger(value messaging.Logger) option {
+	return func(this *configuration) { this.Logger = value }
+}
+func (singleton) Monitor(value Monitor) option {
+	return func(this *configuration) { this.Monitor = value }
+}
 
 func (singleton) apply(options ...option) option {
 	return func(this *configuration) {
@@ -91,6 +99,8 @@ func (singleton) apply(options ...option) option {
 }
 func (singleton) defaults(options ...option) []option {
 	var defaultContext = context.Background()
+	var defaultLogger = nop{}
+	var defaultMonitor = nop{}
 	const defaultChannelBufferSize = 1024
 	const defaultIsolationLevel = sql.LevelReadCommitted
 	const defaultRetryTimeout = time.Second * 5
@@ -101,5 +111,17 @@ func (singleton) defaults(options ...option) []option {
 		Options.IsolationLevel(defaultIsolationLevel),
 		Options.Now(time.Now),
 		Options.RetryTimeout(defaultRetryTimeout),
+		Options.Logger(defaultLogger),
+		Options.Monitor(defaultMonitor),
 	}, options...)
 }
+
+type nop struct{}
+
+func (nop) Printf(_ string, _ ...interface{}) {}
+func (nop) Println(_ ...interface{})          {}
+
+func (nop) MessageReceived(_ int)  {}
+func (nop) MessageStored(_ int)    {}
+func (nop) MessagePublished(_ int) {}
+func (nop) MessageConfirmed(_ int) {}

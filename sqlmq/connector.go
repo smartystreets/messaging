@@ -29,6 +29,7 @@ func (this defaultConnection) Writer(_ context.Context) (messaging.Writer, error
 func (this defaultConnection) CommitWriter(ctx context.Context) (messaging.CommitWriter, error) {
 	tx, err := this.config.StorageHandle.BeginTx(ctx, &this.config.SQLTxOptions)
 	if err != nil {
+		this.config.Logger.Printf("[WARN] Unable to begin new storage transaction [%s].", err)
 		return nil, err
 	}
 
