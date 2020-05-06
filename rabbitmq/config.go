@@ -130,3 +130,11 @@ type nop struct{}
 
 func (nop) Printf(_ string, _ ...interface{}) {}
 func (nop) Println(_ ...interface{})          {}
+
+func (nop) ConnectionOpened(_ error)               {}
+func (nop) ConnectionClosed()                      {}
+func (nop) DispatchPublished()                     {}
+func (nop) DeliveryReceived()                      {}
+func (nop) DeliveryAcknowledged(_ uint16, _ error) {}
+func (nop) TransactionCommitted(_ error)           {}
+func (nop) TransactionRolledBack(_ error)          {}

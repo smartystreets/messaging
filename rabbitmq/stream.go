@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"context"
 	"io"
+	"log"
 	"strconv"
 	"sync"
 
@@ -17,10 +18,19 @@ type defaultStream struct {
 	streamID   string
 	batchAck   bool
 	closer     sync.Once
+	logger     messaging.Logger
+	monitor    Monitor
 }
 
-func newStream(channel adapter.Channel, deliveries <-chan amqp.Delivery, id string, exclusive bool) messaging.Stream {
-	return &defaultStream{channel: channel, deliveries: deliveries, streamID: id, batchAck: exclusive}
+func newStream(channel adapter.Channel, deliveries <-chan amqp.Delivery, id string, exclusive bool, config configuration) messaging.Stream {
+	return &defaultStream{
+		channel:    channel,
+		deliveries: deliveries,
+		streamID:   id,
+		batchAck:   exclusive,
+		logger:     config.Logger,
+		monitor:    config.Monitor,
+	}
 }
 
 func (this *defaultStream) Read(ctx context.Context, target *messaging.Delivery) error {
@@ -47,6 +57,8 @@ func (this *defaultStream) processDelivery(source amqp.Delivery, target *messagi
 	target.ContentEncoding = source.ContentEncoding
 	target.Headers = source.Headers
 	target.Payload = source.Body
+
+	this.monitor.DeliveryReceived()
 	return nil
 }
 func parseUint64(value string) uint64 {
@@ -68,14 +80,19 @@ func (this *defaultStream) Acknowledge(ctx context.Context, deliveries ...messag
 
 	for _, delivery := range deliveries {
 		if err := this.channel.Ack(delivery.DeliveryID, this.batchAck); err != nil {
+			log.Println("[WARN] Failed to acknowledge delivery against underlying channel:", err)
+			this.monitor.DeliveryAcknowledged(uint16(length), err)
 			return err
 		}
 	}
 
+	this.monitor.DeliveryAcknowledged(uint16(length), nil)
 	return nil
 }
 
 func (this *defaultStream) Close() (err error) {
-	this.closer.Do(func() { err = this.channel.CancelConsumer(this.streamID) })
+	this.closer.Do(func() {
+		err = this.channel.CancelConsumer(this.streamID)
+	})
 	return err
 }

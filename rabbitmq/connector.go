@@ -10,10 +10,12 @@ import (
 )
 
 type defaultConnector struct {
-	inner  adapter.Connector
-	dialer netDialer
-	broker func() BrokerEndpoint
-	config configuration
+	inner   adapter.Connector
+	dialer  netDialer
+	broker  func() BrokerEndpoint
+	config  configuration
+	monitor Monitor
+	logger  messaging.Logger
 
 	active []messaging.Connection
 	mutex  sync.Mutex
@@ -21,10 +23,12 @@ type defaultConnector struct {
 
 func newConnector(config configuration) messaging.Connector {
 	return &defaultConnector{
-		inner:  config.Connector,
-		dialer: config.Dialer,
-		broker: config.Endpoint,
-		config: config,
+		inner:   config.Connector,
+		dialer:  config.Dialer,
+		broker:  config.Endpoint,
+		config:  config,
+		monitor: config.Monitor,
+		logger:  config.Logger,
 	}
 }
 
@@ -32,11 +36,15 @@ func (this *defaultConnector) Connect(ctx context.Context) (messaging.Connection
 	hostAddress, config := this.configuration()
 	socket, err := this.dialer.DialContext(ctx, "tcp", hostAddress)
 	if err != nil {
+		this.logger.Println("[WARN] Unable to connect:", err)
+		this.monitor.ConnectionOpened(err)
 		return nil, err
 	}
 
 	amqpConnection, err := this.inner.Connect(ctx, socket, config)
 	if err != nil {
+		this.logger.Println("[WARN] Unable to connect:", err)
+		this.config.Monitor.ConnectionOpened(err)
 		return nil, err
 	}
 

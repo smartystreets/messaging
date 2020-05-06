@@ -12,7 +12,13 @@ type BrokerEndpoint struct {
 }
 
 type Monitor interface {
-	// TODO
+	ConnectionOpened(error)
+	ConnectionClosed()
+	DispatchPublished()
+	DeliveryReceived()
+	DeliveryAcknowledged(uint16, error)
+	TransactionCommitted(error)
+	TransactionRolledBack(error)
 }
 
 var (

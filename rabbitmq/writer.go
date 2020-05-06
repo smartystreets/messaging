@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,13 +13,21 @@ import (
 )
 
 type defaultWriter struct {
-	inner                adapter.Channel
-	panicOnTopologyError bool
-	now                  func() time.Time
+	inner         adapter.Channel
+	topologyPanic bool
+	now           func() time.Time
+	logger        messaging.Logger
+	monitor       Monitor
 }
 
 func newWriter(inner adapter.Channel, config configuration) messaging.CommitWriter {
-	return defaultWriter{inner: inner, panicOnTopologyError: config.TopologyFailurePanic, now: config.Now}
+	return defaultWriter{
+		inner:         inner,
+		topologyPanic: config.TopologyFailurePanic,
+		now:           config.Now,
+		logger:        config.Logger,
+		monitor:       config.Monitor,
+	}
 }
 
 func (this defaultWriter) Write(_ context.Context, messages ...messaging.Dispatch) (count int, err error) {
@@ -29,8 +38,11 @@ func (this defaultWriter) Write(_ context.Context, messages ...messaging.Dispatc
 		converted := toAMQPDispatch(message, now)
 		partition := strconv.FormatUint(message.Partition, 10)
 		if err := this.inner.Publish(message.Topic, partition, converted); err != nil {
+			this.logger.Println("[WARN] Failed to write dispatch to underlying channel:", err)
 			return count - 1, err // writes are async, only channel unavailability causes errors here
 		}
+
+		this.monitor.DispatchPublished()
 	}
 
 	return count, nil
@@ -72,13 +84,27 @@ func computePersistence(durable bool) uint8 {
 }
 
 func (this defaultWriter) Commit() error {
-	return this.tryPanic(this.inner.TxCommit())
+	if err := this.inner.TxCommit(); err == nil {
+		this.monitor.TransactionCommitted(nil)
+		return nil
+	} else {
+		log.Println("[WARN] Failed to commit channel transaction:", err)
+		this.monitor.TransactionCommitted(err)
+		return this.tryPanic(err)
+	}
 }
 func (this defaultWriter) Rollback() error {
-	return this.inner.TxRollback()
+	if err := this.inner.TxRollback(); err == nil {
+		this.monitor.TransactionRolledBack(nil)
+		return nil
+	} else {
+		log.Println("[WARN] Failed to rollback channel transaction:", err)
+		this.monitor.TransactionRolledBack(err)
+		return this.tryPanic(err)
+	}
 }
 func (this defaultWriter) tryPanic(err error) error {
-	if err == nil || !this.panicOnTopologyError {
+	if !this.topologyPanic {
 		return err
 	}
 

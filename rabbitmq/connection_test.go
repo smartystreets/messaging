@@ -28,7 +28,7 @@ type ConnectionFixture struct {
 }
 
 func (this *ConnectionFixture) Setup() {
-	this.connection = newConnection(this, configuration{})
+	this.connection = newConnection(this, configuration{Monitor: nop{}, Logger: nop{}})
 }
 
 func (this *ConnectionFixture) TestWhenOpeningReader_OpenAChannelAndReturnReader() {

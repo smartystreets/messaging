@@ -38,7 +38,8 @@ func (this *StreamFixture) Setup() {
 	this.initializeStream()
 }
 func (this *StreamFixture) initializeStream() {
-	this.stream = newStream(this, this.deliveries, this.streamID, this.exclusiveStream)
+	this.stream = newStream(this, this.deliveries, this.streamID, this.exclusiveStream,
+		configuration{Logger: nop{}, Monitor: nop{}})
 }
 
 func (this *StreamFixture) TestWhenCloseInvokedMultipleTimes_OnlyCancelConsumerOnce() {

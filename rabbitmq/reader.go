@@ -18,61 +18,67 @@ type defaultReader struct {
 	config  configuration
 	mutex   sync.Mutex
 	counter uint64
+	logger  messaging.Logger
 
 	hasExclusiveStream bool
 }
 
 func newReader(inner adapter.Channel, config configuration) messaging.Reader {
-	return &defaultReader{inner: inner, config: config}
+	return &defaultReader{inner: inner, config: config, logger: config.Logger}
 }
-func (this *defaultReader) Stream(_ context.Context, config messaging.StreamConfig) (messaging.Stream, error) {
+func (this *defaultReader) Stream(_ context.Context, settings messaging.StreamConfig) (messaging.Stream, error) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
 	if this.hasExclusiveStream {
 		return nil, ErrAlreadyExclusive
 	}
-	if config.ExclusiveStream && len(this.streams) > 0 {
+	if settings.ExclusiveStream && len(this.streams) > 0 {
 		return nil, ErrMultipleStreams
 	}
 
-	if err := establishTopology(this.inner, config); err != nil {
+	if err := this.establishTopology(settings); err != nil {
 		_ = this.inner.Close()
 		return nil, this.tryPanic(err)
 	}
 
-	if err := this.inner.BufferSize(config.BufferSize); err != nil {
+	if err := this.inner.BufferSize(settings.BufferSize); err != nil {
+		this.logger.Println("[WARN] Failed to set channel buffer size:", err)
 		_ = this.inner.Close()
 		return nil, err
 	}
 
 	streamID := strconv.FormatUint(this.counter, 10)
-	deliveries, err := this.inner.Consume(streamID, config.Queue)
+	deliveries, err := this.inner.Consume(streamID, settings.Queue)
 	if err != nil {
+		this.logger.Println("[WARN] Failed to open consumer on channel:", err)
 		_ = this.inner.Close()
 		return nil, err
 	}
 
-	stream := newStream(this.inner, deliveries, streamID, config.ExclusiveStream)
+	stream := newStream(this.inner, deliveries, streamID, settings.ExclusiveStream, this.config)
 	this.counter++
 	this.streams = append(this.streams, stream)
-	this.hasExclusiveStream = this.hasExclusiveStream || config.ExclusiveStream
+	this.hasExclusiveStream = this.hasExclusiveStream || settings.ExclusiveStream
 	return stream, nil
 }
-func establishTopology(channel adapter.Channel, config messaging.StreamConfig) error {
+func (this *defaultReader) establishTopology(config messaging.StreamConfig) error {
 	if !config.EstablishTopology {
 		return nil
 	}
 
-	if err := channel.DeclareQueue(config.Queue); err != nil {
+	if err := this.inner.DeclareQueue(config.Queue); err != nil {
+		this.logger.Println("[WARN] Unable to establish topology, queue declaration failed:", err)
 		return err
 	}
 
 	for _, topic := range config.Topics {
-		if err := channel.DeclareExchange(topic); err != nil {
+		if err := this.inner.DeclareExchange(topic); err != nil {
+			this.logger.Println("[WARN] Unable to establish topology, exchange declaration failed:", err)
 			return err
 		}
-		if err := channel.BindQueue(config.Queue, topic); err != nil {
+		if err := this.inner.BindQueue(config.Queue, topic); err != nil {
+			this.logger.Println("[WARN] Unable to establish topology, queue binding failed:", err)
 			return err
 		}
 	}
