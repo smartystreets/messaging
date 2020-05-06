@@ -56,10 +56,7 @@ func (this *dispatchReceiver) Commit() error {
 		}
 	}
 
-	for i := range this.buffer {
-		this.buffer[i] = messaging.Dispatch{}
-	}
-	this.buffer = this.buffer[0:0]
+	// NOTE: we don't clear the buffer because the receiver is thrown away after commit
 	return nil
 }
 
