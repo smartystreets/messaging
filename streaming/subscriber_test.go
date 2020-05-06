@@ -49,6 +49,7 @@ type SubscriberFixture struct {
 	listenWaitForSoftShutdown  bool
 	listenSleepForHardShutdown bool
 	listenWaitForHardShutdown  bool
+	listenSleep                time.Duration
 }
 
 func (this *SubscriberFixture) Setup() {
@@ -169,9 +170,22 @@ func (this *SubscriberFixture) TestWhenShutdownStrategyIsImmediate_HardAndSoftSh
 
 	started := time.Now().UTC()
 	this.subscriber.Listen()
-	duration := time.Since(started)
 
-	this.So(duration, should.BeLessThan, this.subscription.shutdownTimeout)
+	this.So(time.Since(started), should.BeLessThan, this.subscription.shutdownTimeout)
+}
+
+func (this *SubscriberFixture) TestWhenHardShutdownIsInvoked_StillWaitForWorkersToConclude() {
+	this.subscription.shutdownStrategy = ShutdownStrategyDrain
+	this.subscription.shutdownTimeout = time.Millisecond * 3
+	this.listenSleep = time.Millisecond * 7 // listeners take longer, even after hard shutdown
+	this.softShutdownWhenListening = true
+	this.listenWaitForHardShutdown = true
+	this.initializeSubscriber()
+
+	started := time.Now().UTC()
+	this.subscriber.Listen()
+
+	this.So(time.Since(started), should.BeGreaterThan, this.listenSleep)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,7 +247,9 @@ func (this *SubscriberFixture) Listen() {
 		<-this.softContext.Done()
 	}
 
-	if this.listenSleepForHardShutdown {
+	if this.listenSleep > 0 {
+		time.Sleep(this.listenSleep)
+	} else if this.listenSleepForHardShutdown {
 		time.Sleep(this.subscription.shutdownTimeout / 2)
 	} else if this.listenWaitForHardShutdown {
 		<-this.subscriber.(defaultSubscriber).hardContext.Done()
