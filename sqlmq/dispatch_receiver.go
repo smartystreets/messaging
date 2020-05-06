@@ -56,7 +56,10 @@ func (this *dispatchReceiver) Commit() error {
 		}
 	}
 
-	// TODO: clear buffer!!!
+	for i := range this.buffer {
+		this.buffer[i] = messaging.Dispatch{}
+	}
+	this.buffer = this.buffer[0:0]
 	return nil
 }
 

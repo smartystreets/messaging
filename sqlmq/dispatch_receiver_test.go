@@ -114,6 +114,28 @@ func (this *DispatchReceiverFixture) TestWhenTransactionContextCancelled_DoNotBl
 	this.So(len(this.channel), should.Equal, cap(this.channel))
 }
 
+func (this *DispatchReceiverFixture) TestWhenCommittingWithoutAnyDispatches_CommitShouldStillBeInvoked() {
+	// there may be other storage operations using the same SQL transaction, so we still need to allow commit to be called
+	err := this.writer.Commit()
+
+	this.So(err, should.BeNil)
+	this.So(this.commitCalls, should.Equal, 1)
+}
+func (this *DispatchReceiverFixture) TestWhenCommittingNewBatchAfterFirstBatch_OnlyNewMessagesShouldBeCommittedAndWrittenToOutputChannel() {
+	_, _ = this.writer.Write(nil, messaging.Dispatch{MessageID: 1})
+	_ = this.writer.Commit()
+
+	_, _ = this.writer.Write(nil, messaging.Dispatch{MessageID: 2})
+	err := this.writer.Commit()
+
+	this.So(err, should.BeNil)
+	this.So(this.commitCalls, should.Equal, 2)
+	this.So(this.storeWrites, should.Resemble, []messaging.Dispatch{{MessageID: 1}, {MessageID: 2}})
+	this.So(<-this.channel, should.Resemble, messaging.Dispatch{MessageID: 1})
+	this.So(<-this.channel, should.Resemble, messaging.Dispatch{MessageID: 2})
+	this.So(this.channel, should.BeEmpty)
+}
+
 func (this *DispatchReceiverFixture) TestWhenRollingBack_InvokeUnderlyingTransactionRollback() {
 	this.rollbackError = errors.New("")
 
