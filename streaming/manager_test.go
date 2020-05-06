@@ -56,13 +56,13 @@ func (this *ManagerFixture) newSubscriber(ctx context.Context, subscription Subs
 }
 
 func (this *ManagerFixture) TestWhenListening_NewSubscriberListenersCreatedAndStarted() {
-	this.listenSleep = time.Millisecond * 10
+	this.listenSleep = time.Millisecond * 5
 	started := time.Now().UTC()
 
 	go closeResource(this.manager)
 	this.manager.Listen()
 
-	this.So(time.Since(started), should.BeBetween, this.listenSleep, this.listenSleep*3)
+	this.So(time.Since(started), should.BeBetween, this.listenSleep, this.listenSleep*4)
 	this.So(this.subscriberCount, should.Equal, len(this.subscriptions))
 	this.So(this.listenCount, should.Equal, len(this.subscriptions))
 	this.So(this.subscriberContext, should.NotBeNil)
