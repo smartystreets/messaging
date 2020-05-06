@@ -2,7 +2,6 @@ package streaming
 
 import (
 	"context"
-	"log"
 
 	"github.com/smartystreets/messaging/v3"
 )
@@ -42,9 +41,14 @@ func (singleton) apply(options ...option) option {
 	}
 }
 func (singleton) defaults(options ...option) []option {
-	var defaultLogger = log.New(log.Writer(), log.Prefix(), log.Flags()) // TODO
+	var defaultLogger = nop{}
 
 	return append([]option{
 		Options.Logger(defaultLogger),
 	}, options...)
 }
+
+type nop struct{}
+
+func (nop) Printf(_ string, _ ...interface{}) {}
+func (nop) Println(_ ...interface{})          {}
