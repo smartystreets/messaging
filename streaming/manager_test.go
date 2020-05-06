@@ -62,7 +62,7 @@ func (this *ManagerFixture) TestWhenListening_NewSubscriberListenersCreatedAndSt
 	go closeResource(this.manager)
 	this.manager.Listen()
 
-	this.So(time.Since(started), should.BeBetween, this.listenSleep, this.listenSleep*2)
+	this.So(time.Since(started), should.BeBetween, this.listenSleep, this.listenSleep*3)
 	this.So(this.subscriberCount, should.Equal, len(this.subscriptions))
 	this.So(this.listenCount, should.Equal, len(this.subscriptions))
 	this.So(this.subscriberContext, should.NotBeNil)
