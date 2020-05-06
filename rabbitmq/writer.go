@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -38,7 +37,7 @@ func (this defaultWriter) Write(_ context.Context, messages ...messaging.Dispatc
 		converted := toAMQPDispatch(message, now)
 		partition := strconv.FormatUint(message.Partition, 10)
 		if err := this.inner.Publish(message.Topic, partition, converted); err != nil {
-			this.logger.Println("[WARN] Failed to write dispatch to underlying channel:", err)
+			this.logger.Printf("[WARN] Unable to write dispatch to underlying channel [%s].", err)
 			return count - 1, err // writes are async, only channel unavailability causes errors here
 		}
 
@@ -88,7 +87,7 @@ func (this defaultWriter) Commit() error {
 		this.monitor.TransactionCommitted(nil)
 		return nil
 	} else {
-		log.Println("[WARN] Failed to commit channel transaction:", err)
+		this.logger.Printf("[WARN] Unable to commit channel transaction [%s].", err)
 		this.monitor.TransactionCommitted(err)
 		return this.tryPanic(err)
 	}
@@ -98,7 +97,7 @@ func (this defaultWriter) Rollback() error {
 		this.monitor.TransactionRolledBack(nil)
 		return nil
 	} else {
-		log.Println("[WARN] Failed to rollback channel transaction:", err)
+		this.logger.Printf("[WARN] Unable to rollback channel transaction [%s].", err)
 		this.monitor.TransactionRolledBack(err)
 		return this.tryPanic(err)
 	}

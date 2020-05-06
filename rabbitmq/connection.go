@@ -23,7 +23,7 @@ func newConnection(inner adapter.Connection, config configuration) messaging.Con
 }
 func (this *defaultConnection) Reader(_ context.Context) (messaging.Reader, error) {
 	if channel, err := this.inner.Channel(); err != nil {
-		this.logger.Println("[WARN] Unable able open read channel:", err)
+		this.logger.Printf("[WARN] Unable able open read channel [%s].", err)
 		return nil, err
 	} else {
 		return newReader(channel, this.config), nil
@@ -39,7 +39,7 @@ func (this *defaultConnection) CommitWriter(_ context.Context) (messaging.Commit
 func (this *defaultConnection) writer(transactional bool) (messaging.CommitWriter, error) {
 	channel, err := this.inner.Channel()
 	if err != nil {
-		this.logger.Println("[WARN] Unable able open write channel:", err)
+		this.logger.Printf("[WARN] Unable able open write channel [%s].", err)
 		return nil, err
 	}
 

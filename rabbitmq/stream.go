@@ -3,7 +3,6 @@ package rabbitmq
 import (
 	"context"
 	"io"
-	"log"
 	"strconv"
 	"sync"
 
@@ -80,7 +79,7 @@ func (this *defaultStream) Acknowledge(ctx context.Context, deliveries ...messag
 
 	for _, delivery := range deliveries {
 		if err := this.channel.Ack(delivery.DeliveryID, this.batchAck); err != nil {
-			log.Println("[WARN] Failed to acknowledge delivery against underlying channel:", err)
+			this.logger.Printf("[WARN] Unable to acknowledge delivery against underlying channel [%s].", err)
 			this.monitor.DeliveryAcknowledged(uint16(length), err)
 			return err
 		}

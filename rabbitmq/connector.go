@@ -36,14 +36,14 @@ func (this *defaultConnector) Connect(ctx context.Context) (messaging.Connection
 	hostAddress, config := this.configuration()
 	socket, err := this.dialer.DialContext(ctx, "tcp", hostAddress)
 	if err != nil {
-		this.logger.Println("[WARN] Unable to connect:", err)
+		this.logger.Printf("[WARN] Unable to connect [%s].", err)
 		this.monitor.ConnectionOpened(err)
 		return nil, err
 	}
 
 	amqpConnection, err := this.inner.Connect(ctx, socket, config)
 	if err != nil {
-		this.logger.Println("[WARN] Unable to connect:", err)
+		this.logger.Printf("[WARN] Unable to connect [%s].", err)
 		this.config.Monitor.ConnectionOpened(err)
 		return nil, err
 	}

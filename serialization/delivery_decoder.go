@@ -40,7 +40,7 @@ func (this defaultDeliveryDecoder) Decode(delivery *messaging.Delivery) error {
 
 	pointer := reflect.New(instanceType)
 	if err := deserializer.Deserialize(delivery.Payload, pointer.Interface()); err != nil {
-		this.logger.Printf("[WARN] Failed to deserialize message of [%s]: %s", delivery.MessageType, err)
+		this.logger.Printf("[WARN] Unable to deserialize message of [%s]: %s", delivery.MessageType, err)
 		return wrapError(err)
 	}
 

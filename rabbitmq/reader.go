@@ -43,7 +43,7 @@ func (this *defaultReader) Stream(_ context.Context, settings messaging.StreamCo
 	}
 
 	if err := this.inner.BufferSize(settings.BufferSize); err != nil {
-		this.logger.Println("[WARN] Failed to set channel buffer size:", err)
+		this.logger.Printf("[WARN] Unable to set channel buffer size [%s].", err)
 		_ = this.inner.Close()
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (this *defaultReader) Stream(_ context.Context, settings messaging.StreamCo
 	streamID := strconv.FormatUint(this.counter, 10)
 	deliveries, err := this.inner.Consume(streamID, settings.Queue)
 	if err != nil {
-		this.logger.Println("[WARN] Failed to open consumer on channel:", err)
+		this.logger.Printf("[WARN] Unable to open consumer on channel [%s].", err)
 		_ = this.inner.Close()
 		return nil, err
 	}
@@ -68,17 +68,17 @@ func (this *defaultReader) establishTopology(config messaging.StreamConfig) erro
 	}
 
 	if err := this.inner.DeclareQueue(config.Queue); err != nil {
-		this.logger.Println("[WARN] Unable to establish topology, queue declaration failed:", err)
+		this.logger.Printf("[WARN] Unable to establish topology, queue declaration failed [%s].", err)
 		return err
 	}
 
 	for _, topic := range config.Topics {
 		if err := this.inner.DeclareExchange(topic); err != nil {
-			this.logger.Println("[WARN] Unable to establish topology, exchange declaration failed:", err)
+			this.logger.Printf("[WARN] Unable to establish topology, exchange declaration failed [%s].", err)
 			return err
 		}
 		if err := this.inner.BindQueue(config.Queue, topic); err != nil {
-			this.logger.Println("[WARN] Unable to establish topology, queue binding failed:", err)
+			this.logger.Printf("[WARN] Unable to establish topology, queue binding failed [%s].", err)
 			return err
 		}
 	}

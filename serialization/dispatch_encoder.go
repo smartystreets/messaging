@@ -37,7 +37,7 @@ func (this defaultDispatchEncoder) Encode(dispatch *messaging.Dispatch) error {
 
 	raw, err := this.serializer.Serialize(dispatch.Message)
 	if err != nil {
-		this.logger.Printf("[WARN] Failed to serialize message of type [%s]: %s", reflect.TypeOf(dispatch.Message), err)
+		this.logger.Printf("[WARN] Unable to serialize message of type [%s]: %s", reflect.TypeOf(dispatch.Message), err)
 		return wrapError(err)
 	}
 
