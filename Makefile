@@ -3,7 +3,7 @@
 test: fmt
 	go test -count=1 -timeout=1s -short -race -covermode=atomic ./...
 
-testall:
+test.all:
 	go test -count=1 ./...
 
 fmt:
@@ -14,4 +14,4 @@ compile:
 
 build: test compile
 
-.PHONY: test testall fmt compile build
+.PHONY: test test.all fmt compile build
