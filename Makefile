@@ -1,7 +1,10 @@
 #!/usr/bin/make -f
 
 test: fmt
-	go test -timeout=1s -count=1 -covermode=atomic ./...
+	go test -count=1 -timeout=1s -short -race -covermode=atomic ./...
+
+testall:
+	go test -count=1 ./...
 
 fmt:
 	go fmt ./...
@@ -11,4 +14,4 @@ compile:
 
 build: test compile
 
-.PHONY: test fmt compile build
+.PHONY: test testall fmt compile build
