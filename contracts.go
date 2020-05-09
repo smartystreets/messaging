@@ -29,8 +29,11 @@ type StreamConfig struct {
 	EstablishTopology bool
 	ExclusiveStream   bool
 	BufferSize        uint16
-	Queue             string
+	Queue             string   // TODO: stream name
 	Topics            []string
+
+	// TODO: partition int64
+	// TODO: position/sequence int64
 }
 type Stream interface {
 	Read(ctx context.Context, delivery *Delivery) error
