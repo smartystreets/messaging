@@ -54,19 +54,29 @@ func (this *WriterFixture) TestWhenCloseInvoked_UnderlyingChannelClosed() {
 
 	this.So(err, should.Equal, this.closeError)
 }
-func (this *WriterFixture) TestWhenRollbackInvoked_UnderlyingChannelRolledBack() {
+func (this *WriterFixture) TestWhenUnderlyingRollbackFails_ReturnError() {
 	this.rollbackError = errors.New("")
 
 	err := this.writer.Rollback()
 
 	this.So(err, should.Equal, this.rollbackError)
 }
-func (this *WriterFixture) TestWhenCommitInvoke_UnderlyingChannelCommitted() {
+func (this *WriterFixture) TestUnderlyingRollbackSucceeds_ReturnNil() {
+	err := this.writer.Rollback()
+
+	this.So(err, should.BeNil)
+}
+func (this *WriterFixture) TestWhenUnderlyingCommitFails_ReturnError() {
 	this.commitError = errors.New("")
 
 	err := this.writer.Commit()
 
 	this.So(err, should.Equal, this.commitError)
+}
+func (this *WriterFixture) TestWhenUnderlyingCommitSucceeds_ReturnNil() {
+	err := this.writer.Commit()
+
+	this.So(err, should.BeNil)
 }
 func (this *WriterFixture) TestWhenTopologyNotEstablished_PanicOnTopologyErrors() {
 	this.panicOnTopologyFailure = true
