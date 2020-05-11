@@ -49,7 +49,7 @@ func (singleton) DataSource(driver, dataSource string) option {
 	return func(this *configuration) { this.DriverName = driver; this.DataSource = dataSource }
 }
 func (singleton) DynamicStorageHandle(value atomic.Value) option {
-	return func(this *configuration) { this.StorageHandle = newDynamicHandle(value) }
+	return func(this *configuration) { this.StorageHandle = adapter.Dynamic(value) }
 }
 func (singleton) StorageHandle(value *sql.DB) option {
 	return func(this *configuration) { this.StorageHandle = adapter.New(value) }
