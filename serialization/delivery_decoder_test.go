@@ -48,7 +48,6 @@ func (this *DeliveryDecoderFixture) TestWhenMessageTypeNotFound_ReturnError() {
 	err := this.decoder.Decode(&this.delivery)
 
 	this.So(err, should.Wrap, ErrSerializationFailure)
-	// this.So(errors.Is(err, ErrMessageTypeNotFound), should.BeTrue) // TODO
 }
 
 func (this *DeliveryDecoderFixture) TestWhenContentTypeNotFound_ReturnError() {
@@ -60,7 +59,6 @@ func (this *DeliveryDecoderFixture) TestWhenContentTypeNotFound_ReturnError() {
 	err := this.decoder.Decode(&this.delivery)
 
 	this.So(err, should.Wrap, ErrSerializationFailure)
-	//this.So(errors.Is(err, ErrUnknownContentType), should.BeTrue) // TODO
 }
 
 func (this *DeliveryDecoderFixture) TestWhenDeserializationFails_ReturnError() {
@@ -76,7 +74,6 @@ func (this *DeliveryDecoderFixture) TestWhenDeserializationFails_ReturnError() {
 	this.So(err, should.Wrap, ErrSerializationFailure)
 	this.So(this.deserializeCalls, should.Equal, 1)
 	this.So(this.deserializePayload, should.Resemble, this.delivery.Payload)
-	//this.So(errors.Is(err, ErrUnknownContentType), should.BeTrue)
 }
 
 func (this *DeliveryDecoderFixture) TestWhenDecodingSucceeds_PopulateMessageOnDelivery() {
