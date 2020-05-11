@@ -42,8 +42,8 @@ func (this *SubscriptionConfigFixture) TestWhenValuesAreProvided_SubscriptionSho
 		SubscriptionOptions.Name("name"),
 		SubscriptionOptions.AddWorkers(nil),
 		SubscriptionOptions.Topics("topic1", "topic2"),
-		SubscriptionOptions.MaxBatchSize(1),
-		SubscriptionOptions.BufferSize(2),
+		SubscriptionOptions.BatchCapacity(1),
+		SubscriptionOptions.BufferCapacity(2),
 		SubscriptionOptions.BufferDelayBetweenBatches(3),
 		SubscriptionOptions.EstablishTopology(true),
 		SubscriptionOptions.FullDeliveryToHandler(true),
@@ -55,9 +55,9 @@ func (this *SubscriptionConfigFixture) TestWhenValuesAreProvided_SubscriptionSho
 		queue:             "queue",
 		topics:            []string{"topic1", "topic2"},
 		handlers:          []messaging.Handler{nil},
-		bufferSize:        2,
+		bufferCapacity:    2,
 		establishTopology: true,
-		maxBatchSize:      1,
+		batchCapacity:     1,
 		handleDelivery:    true,
 		bufferTimeout:     3,
 		shutdownStrategy:  ShutdownStrategyCurrentBatch,
@@ -83,10 +83,19 @@ func (this *SubscriptionConfigFixture) TestWhenShutdownStrategyIsImmediate_Timeo
 	this.So(subscription.shutdownTimeout, should.Equal, 0)
 }
 
-func (this *SubscriptionConfigFixture) TestWhenNumberOfHandlersIsLargerThanBufferSize_BufferSizeSetToNumberOfHandlers() {
+func (this *SubscriptionConfigFixture) TestWhenNumberOfHandlersIsLargerThanBufferCapacity_BufferCapacitySetToNumberOfHandlers() {
 	subscription := NewSubscription("queue",
 		SubscriptionOptions.AddWorkers(nil, nil, nil, nil),
-		SubscriptionOptions.BufferSize(2))
+		SubscriptionOptions.BufferCapacity(2))
 
-	this.So(subscription.bufferSize, should.Equal, len(subscription.handlers))
+	this.So(subscription.bufferCapacity, should.Equal, len(subscription.handlers))
+}
+
+func (this *SubscriptionConfigFixture) TestWhenFullThrottle_MaximumValuesForBufferCapacityAndBatchCapacity() {
+	subscription := NewSubscription("queue",
+		SubscriptionOptions.AddWorkers(nil),
+		SubscriptionOptions.FullThrottle())
+
+	this.So(subscription.batchCapacity, should.Equal, 65535)
+	this.So(subscription.bufferCapacity, should.Equal, 65535)
 }

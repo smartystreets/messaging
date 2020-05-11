@@ -223,7 +223,7 @@ func (this *WriterFixture) DeclareExchange(name string) error {
 func (this *WriterFixture) BindQueue(queue, exchange string) error {
 	panic("nop")
 }
-func (this *WriterFixture) BufferSize(value uint16) error {
+func (this *WriterFixture) BufferCapacity(value uint16) error {
 	panic("nop")
 }
 func (this *WriterFixture) Consume(consumerID, queue string) (<-chan amqp.Delivery, error) {

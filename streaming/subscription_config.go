@@ -2,6 +2,7 @@ package streaming
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/smartystreets/messaging/v3"
@@ -31,11 +32,14 @@ func (subscriptionSingleton) AddLegacyWorkers(values ...legacyHandler) subscript
 		}
 	}
 }
-func (subscriptionSingleton) BufferSize(value uint16) subscriptionOption {
-	return func(this *Subscription) { this.bufferSize = value }
+func (subscriptionSingleton) FullThrottle() subscriptionOption {
+	return func(this *Subscription) { this.bufferCapacity = math.MaxUint16; this.batchCapacity = math.MaxUint16 }
 }
-func (subscriptionSingleton) MaxBatchSize(value uint16) subscriptionOption {
-	return func(this *Subscription) { this.maxBatchSize = value }
+func (subscriptionSingleton) BufferCapacity(value uint16) subscriptionOption {
+	return func(this *Subscription) { this.bufferCapacity = value }
+}
+func (subscriptionSingleton) BatchCapacity(value uint16) subscriptionOption {
+	return func(this *Subscription) { this.batchCapacity = value }
 }
 func (subscriptionSingleton) BufferDelayBetweenBatches(value time.Duration) subscriptionOption {
 	return func(this *Subscription) { this.bufferTimeout = value }
@@ -73,8 +77,8 @@ func (subscriptionSingleton) apply(options ...subscriptionOption) subscriptionOp
 			option(this)
 		}
 
-		if length := len(this.handlers); length > int(this.bufferSize) {
-			this.bufferSize = uint16(length)
+		if length := len(this.handlers); length > int(this.bufferCapacity) {
+			this.bufferCapacity = uint16(length)
 		}
 
 		if len(this.handlers) == 0 {
@@ -83,8 +87,8 @@ func (subscriptionSingleton) apply(options ...subscriptionOption) subscriptionOp
 	}
 }
 func (subscriptionSingleton) defaults(options ...subscriptionOption) []subscriptionOption {
-	const defaultBufferSize = 1
-	const defaultMaxBatchSize = 1
+	const defaultBufferCapacity = 1
+	const defaultBatchCapacity = 1
 	const defaultBatchDelay = 0
 	const defaultEstablishTopology = true
 	const defaultPassFullDeliveryToHandler = false
@@ -92,8 +96,8 @@ func (subscriptionSingleton) defaults(options ...subscriptionOption) []subscript
 	const defaultShutdownTimeout = time.Second * 5
 
 	return append([]subscriptionOption{
-		SubscriptionOptions.BufferSize(defaultBufferSize),
-		SubscriptionOptions.MaxBatchSize(defaultMaxBatchSize),
+		SubscriptionOptions.BufferCapacity(defaultBufferCapacity),
+		SubscriptionOptions.BatchCapacity(defaultBatchCapacity),
 		SubscriptionOptions.BufferDelayBetweenBatches(defaultBatchDelay),
 		SubscriptionOptions.EstablishTopology(defaultEstablishTopology),
 		SubscriptionOptions.FullDeliveryToHandler(defaultPassFullDeliveryToHandler),

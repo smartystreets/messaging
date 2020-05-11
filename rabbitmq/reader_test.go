@@ -29,8 +29,8 @@ type ReaderFixture struct {
 	bindQueueQueueNames    []string
 	bindQueueExchangeNames []string
 	bindQueueError         error
-	bufferSizeValue        uint16
-	bufferSizeError        error
+	bufferCapacityValue    uint16
+	bufferCapacityError    error
 	consumeConsumerID      string
 	consumeQueue           string
 	consumeChannel         chan amqp.Delivery
@@ -53,7 +53,7 @@ func (this *ReaderFixture) TestWhenEstablishingAStream_StartConsumerOnFromUnderl
 	stream, err := this.reader.Stream(context.Background(), messaging.StreamConfig{
 		EstablishTopology: true,
 		ExclusiveStream:   true,
-		BufferSize:        2,
+		BufferCapacity:    2,
 		StreamName:        "queue",
 		Topics:            []string{"topic1", "topic2"},
 	})
@@ -65,7 +65,7 @@ func (this *ReaderFixture) TestWhenEstablishingAStream_StartConsumerOnFromUnderl
 	this.So(this.declareExchangeNames, should.Resemble, []string{"topic1", "topic2"})
 	this.So(this.bindQueueQueueNames, should.Resemble, []string{"queue", "queue"})
 	this.So(this.bindQueueExchangeNames, should.Resemble, []string{"topic1", "topic2"})
-	this.So(this.bufferSizeValue, should.Equal, 2)
+	this.So(this.bufferCapacityValue, should.Equal, 2)
 	this.So(this.consumeConsumerID, should.Equal, "0")
 	this.So(this.consumeQueue, should.Equal, "queue")
 }
@@ -75,7 +75,7 @@ func (this *ReaderFixture) TestWhenEstablishingAnExclusiveStreamWithExisting_Ret
 	stream, err := this.reader.Stream(context.Background(), messaging.StreamConfig{
 		EstablishTopology: true,
 		ExclusiveStream:   true,
-		BufferSize:        2,
+		BufferCapacity:    2,
 		StreamName:        "queue",
 		Topics:            []string{"topic1", "topic2"},
 	})
@@ -144,13 +144,13 @@ func (this *ReaderFixture) TestWhenTopologyRedeclarationConflictOccurs_CloseChan
 	this.So(this.callsToClose, should.Equal, 1)
 }
 
-func (this *ReaderFixture) TestWhenSettingBufferSizeFails_CloseChannelAndReturnError() {
-	this.bufferSizeError = errors.New("")
+func (this *ReaderFixture) TestWhenSettingBufferCapacityFails_CloseChannelAndReturnError() {
+	this.bufferCapacityError = errors.New("")
 
 	stream, err := this.reader.Stream(context.Background(), messaging.StreamConfig{})
 
 	this.So(stream, should.BeNil)
-	this.So(err, should.Equal, this.bufferSizeError)
+	this.So(err, should.Equal, this.bufferCapacityError)
 }
 func (this *ReaderFixture) TestWhenStartingConsumerFails_CloseChannelAndReturnError() {
 	this.consumeError = errors.New("")
@@ -187,9 +187,9 @@ func (this *ReaderFixture) BindQueue(queue, exchange string) error {
 	this.bindQueueExchangeNames = append(this.bindQueueExchangeNames, exchange)
 	return this.bindQueueError
 }
-func (this *ReaderFixture) BufferSize(value uint16) error {
-	this.bufferSizeValue = value
-	return this.bufferSizeError
+func (this *ReaderFixture) BufferCapacity(value uint16) error {
+	this.bufferCapacityValue = value
+	return this.bufferCapacityError
 }
 func (this *ReaderFixture) Consume(consumerID, queue string) (<-chan amqp.Delivery, error) {
 	this.consumeConsumerID = consumerID

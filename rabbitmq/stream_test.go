@@ -173,7 +173,7 @@ func (this *StreamFixture) Ack(deliveryTag uint64, multiple bool) error {
 func (this *StreamFixture) DeclareQueue(name string) error         { panic("nop") }
 func (this *StreamFixture) DeclareExchange(name string) error      { panic("nop") }
 func (this *StreamFixture) BindQueue(queue, exchange string) error { panic("nop") }
-func (this *StreamFixture) BufferSize(value uint16) error          { panic("nop") }
+func (this *StreamFixture) BufferCapacity(value uint16) error      { panic("nop") }
 func (this *StreamFixture) Consume(consumerID, queue string) (<-chan amqp.Delivery, error) {
 	panic("nop")
 }

@@ -34,7 +34,7 @@ type StreamConfig struct {
 	ExclusiveStream bool
 
 	// The number of messages that will be buffered in local memory from the messaging infrastructure.
-	BufferSize uint16
+	BufferCapacity uint16
 
 	// The name of the stream to be read. For RabbitMQ, this is the name of the queue, with Kafka, it's the name of the
 	// topic.

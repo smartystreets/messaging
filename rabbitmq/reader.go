@@ -42,7 +42,7 @@ func (this *defaultReader) Stream(_ context.Context, settings messaging.StreamCo
 		return nil, this.tryPanic(err)
 	}
 
-	if err := this.inner.BufferSize(settings.BufferSize); err != nil {
+	if err := this.inner.BufferCapacity(settings.BufferCapacity); err != nil {
 		this.logger.Printf("[WARN] Unable to set channel buffer size [%s].", err)
 		_ = this.inner.Close()
 		return nil, err

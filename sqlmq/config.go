@@ -57,7 +57,7 @@ func (singleton) StorageHandle(value *sql.DB) option {
 func (singleton) Channel(value chan messaging.Dispatch) option {
 	return func(this *configuration) { this.Channel = value }
 }
-func (singleton) ChannelBufferSize(value int) option {
+func (singleton) ChannelBufferCapacity(value int) option {
 	return func(this *configuration) { this.Channel = make(chan messaging.Dispatch, value) }
 }
 func (singleton) IsolationLevel(value sql.IsolationLevel) option {
@@ -105,13 +105,13 @@ func (singleton) defaults(options ...option) []option {
 	var defaultContext = context.Background()
 	var defaultLogger = nop{}
 	var defaultMonitor = nop{}
-	const defaultChannelBufferSize = 1024
+	const defaultChannelBufferCapacity = 1024
 	const defaultIsolationLevel = sql.LevelReadCommitted
 	const defaultRetryTimeout = time.Second * 5
 
 	return append([]option{
 		Options.Context(defaultContext),
-		Options.ChannelBufferSize(defaultChannelBufferSize),
+		Options.ChannelBufferCapacity(defaultChannelBufferCapacity),
 		Options.IsolationLevel(defaultIsolationLevel),
 		Options.Now(time.Now),
 		Options.RetryTimeout(defaultRetryTimeout),

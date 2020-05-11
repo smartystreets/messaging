@@ -57,7 +57,7 @@ func (this *SubscriberFixture) Setup() {
 		queue:             "queue",
 		topics:            []string{"topic1", "topic2"},
 		establishTopology: true,
-		bufferSize:        16,
+		bufferCapacity:    16,
 		handlers:          []messaging.Handler{nil},
 	}
 	this.softContext, this.softShutdown = context.WithCancel(context.Background())
@@ -99,7 +99,7 @@ func (this *SubscriberFixture) TestWhenOpeningStreamFails_ListenShouldReturn() {
 	this.So(this.streamConfig, should.Resemble, messaging.StreamConfig{
 		EstablishTopology: true,
 		ExclusiveStream:   true, // single handler
-		BufferSize:        this.subscription.bufferSize,
+		BufferCapacity:    this.subscription.bufferCapacity,
 		StreamName:        this.subscription.queue,
 		Topics:            this.subscription.topics,
 	})

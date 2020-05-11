@@ -52,7 +52,7 @@ func (this *WorkerFixture) Setup() {
 	this.handler = this
 	this.softContext, this.softShutdown = context.WithCancel(context.Background())
 	this.hardContext, this.hardShutdown = context.WithCancel(context.Background())
-	this.subscription = Subscription{bufferSize: 16, maxBatchSize: 16}
+	this.subscription = Subscription{bufferCapacity: 16, batchCapacity: 16}
 	this.initializeWorker()
 }
 func (this *WorkerFixture) initializeWorker() {
@@ -68,7 +68,7 @@ func (this *WorkerFixture) initializeWorker() {
 }
 
 func (this *WorkerFixture) TestWhenNewWorkerCreated_UnderlyingBufferShouldComeFromSubscription() {
-	this.So(cap(this.channelBuffer), should.Equal, this.subscription.bufferSize)
+	this.So(cap(this.channelBuffer), should.Equal, this.subscription.bufferCapacity)
 }
 
 func (this *WorkerFixture) TestWhenReadingFromUnderlyingStream_AddToBufferedChannelUntilReadFailure() {
@@ -144,8 +144,8 @@ func (this *WorkerFixture) TestWhenStreamingToHandler_BatchOfMessagesPushedToHan
 	this.So(this.acknowledgeDeliveries, should.Resemble, deliveries)
 }
 func (this *WorkerFixture) TestWhenMoreDeliveriesExistThanBatchMax_DeliverInBatchesOfMaxSpecifiedSize() {
-	this.subscription.maxBatchSize = 2
-	this.subscription.bufferSize = 5
+	this.subscription.batchCapacity = 2
+	this.subscription.bufferCapacity = 5
 	this.initializeWorker()
 	this.readError = io.EOF
 	deliveries := []messaging.Delivery{{Message: 1}, {Message: 2}, {Message: 3}, {Message: 4}, {Message: 5}}
@@ -179,8 +179,8 @@ func (this *WorkerFixture) TestWhenConfigured_PassFullDeliveryToHandler() {
 func (this *WorkerFixture) TestWhenAcknowledgementFails_ListeningConcludesWithoutProcessingBufferedDeliveries() {
 	this.acknowledgeError = errors.New("")
 	this.readError = io.EOF
-	this.subscription.maxBatchSize = 1
-	this.subscription.bufferSize = 2
+	this.subscription.batchCapacity = 1
+	this.subscription.bufferCapacity = 2
 	this.initializeWorker()
 	this.channelBuffer <- messaging.Delivery{Message: 1}
 	this.channelBuffer <- messaging.Delivery{Message: 2}
@@ -205,7 +205,7 @@ func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_SleepAfterAc
 func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_DoNotSleepAfterAcknowledgementIfMoreWorkAvailable() {
 	const timeout = time.Millisecond * 5
 	this.readError = io.EOF
-	this.subscription.maxBatchSize = 1
+	this.subscription.batchCapacity = 1
 	this.subscription.bufferTimeout = timeout
 	this.initializeWorker()
 
@@ -233,7 +233,7 @@ func (this *WorkerFixture) TestWhenRequestingShutdownAndStrategyIsImmediate_DoNo
 }
 func (this *WorkerFixture) TestWhenRequestingShutdownAndStrategyIsCurrentBatch_DeliverAndAckBatchThenExit() {
 	this.readError = io.EOF
-	this.subscription.maxBatchSize = 2
+	this.subscription.batchCapacity = 2
 	this.subscription.bufferTimeout = time.Second // should not be reached
 	this.subscription.shutdownStrategy = ShutdownStrategyCurrentBatch
 	this.initializeWorker()

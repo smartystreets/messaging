@@ -12,9 +12,9 @@ type Subscription struct {
 	queue             string
 	topics            []string
 	handlers          []messaging.Handler
-	bufferSize        uint16
+	bufferCapacity    uint16
 	establishTopology bool
-	maxBatchSize      uint16
+	batchCapacity     uint16
 	handleDelivery    bool
 	bufferTimeout     time.Duration // the amount of time to rest and buffer between batches (instead of going as quickly as possible)
 	shutdownStrategy  ShutdownStrategy
@@ -25,7 +25,7 @@ func (this Subscription) streamConfig() messaging.StreamConfig {
 	return messaging.StreamConfig{
 		EstablishTopology: this.establishTopology,
 		ExclusiveStream:   len(this.handlers) <= 1,
-		BufferSize:        this.bufferSize,
+		BufferCapacity:    this.bufferCapacity,
 		StreamName:        this.queue,
 		Topics:            this.topics,
 	}

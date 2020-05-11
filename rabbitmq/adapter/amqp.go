@@ -43,7 +43,7 @@ func (this amqpChannel) BindQueue(queue, exchange string) error {
 	return this.Channel.QueueBind(queue, "", exchange, false, amqp.Table{})
 }
 
-func (this amqpChannel) BufferSize(value uint16) error {
+func (this amqpChannel) BufferCapacity(value uint16) error {
 	return this.Channel.Qos(int(value), 0, false) // false = per-consumer limit
 }
 func (this amqpChannel) Consume(consumerID, queue string) (<-chan amqp.Delivery, error) {

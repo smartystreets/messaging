@@ -30,7 +30,7 @@ type Channel interface {
 	DeclareExchange(name string) error
 	BindQueue(queue, exchange string) error
 
-	BufferSize(value uint16) error
+	BufferCapacity(value uint16) error
 	Consume(consumerID, queue string) (<-chan amqp.Delivery, error)
 	Ack(deliveryTag uint64, multiple bool) error
 	CancelConsumer(consumerID string) error
