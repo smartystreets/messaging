@@ -11,7 +11,7 @@ type defaultConnector struct{ config configuration }
 func newConnector(config configuration) messaging.Connector {
 	return defaultConnector{config: config}
 }
-func (this defaultConnector) Connect(ctx context.Context) (messaging.Connection, error) {
+func (this defaultConnector) Connect(_ context.Context) (messaging.Connection, error) {
 	return defaultConnection{config: this.config}, nil
 }
 func (this defaultConnector) Close() error {

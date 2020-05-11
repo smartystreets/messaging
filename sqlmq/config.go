@@ -3,6 +3,7 @@ package sqlmq
 import (
 	"context"
 	"database/sql"
+	"sync/atomic"
 	"time"
 
 	"github.com/smartystreets/messaging/v3"
@@ -46,6 +47,9 @@ func (singleton) TransportConnector(value messaging.Connector) option {
 }
 func (singleton) DataSource(driver, dataSource string) option {
 	return func(this *configuration) { this.DriverName = driver; this.DataSource = dataSource }
+}
+func (singleton) DynamicStorageHandle(value atomic.Value) option {
+	return func(this *configuration) { this.StorageHandle = newDynamicHandle(value) }
 }
 func (singleton) StorageHandle(value *sql.DB) option {
 	return func(this *configuration) { this.StorageHandle = adapter.New(value) }
