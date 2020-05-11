@@ -26,7 +26,7 @@ func (this Subscription) streamConfig() messaging.StreamConfig {
 		EstablishTopology: this.establishTopology,
 		ExclusiveStream:   len(this.handlers) <= 1,
 		BufferSize:        this.bufferSize,
-		Queue:             this.queue,
+		StreamName:        this.queue,
 		Topics:            this.topics,
 	}
 }

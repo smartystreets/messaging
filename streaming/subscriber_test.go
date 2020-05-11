@@ -100,7 +100,7 @@ func (this *SubscriberFixture) TestWhenOpeningStreamFails_ListenShouldReturn() {
 		EstablishTopology: true,
 		ExclusiveStream:   true, // single handler
 		BufferSize:        this.subscription.bufferSize,
-		Queue:             this.subscription.queue,
+		StreamName:        this.subscription.queue,
 		Topics:            this.subscription.topics,
 	})
 	this.So(this.closeCount, should.Equal, 1) // reader

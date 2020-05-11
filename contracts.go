@@ -26,14 +26,32 @@ type Reader interface {
 	io.Closer
 }
 type StreamConfig struct {
+	// Re-establishes the topology with the underlying messaging infrastructure, if necessary.
+	// On RabbitMQ, this will re-create queues and exchanges and then bind the associated queue to those exchanges.
 	EstablishTopology bool
-	ExclusiveStream   bool
-	BufferSize        uint16
-	Queue             string   // TODO: stream name
-	Topics            []string
 
-	// TODO: partition int64
-	// TODO: position/sequence int64
+	// Indicates whether the stream is the only one that will be opened with the broker.
+	ExclusiveStream bool
+
+	// The number of messages that will be buffered in local memory from the messaging infrastructure.
+	BufferSize uint16
+
+	// The name of the stream to be read. For RabbitMQ, this is the name of the queue, with Kafka, it's the name of the
+	// topic.
+	StreamName string
+
+	// If supported by the underlying messaging infrastructure, the topics to which the stream should subscribe. In the
+	// case of RabbitMQ, the names of the exchanges to which the stream should subscribe. In cases like Kafka, this
+	// value is ignored and the StreamName above becomes the topic.
+	Topics []string
+
+	// If supported by the underlying messaging infrastructure, the partition which should be read from. In cases like
+	// RabbitMQ, this value is ignored. With Kafka, this value is used to subscribe to the appropriate partition.
+	Partition uint64
+
+	// If supported by the underlying messaging infrastructure, the sequence at which messages should be read from
+	// the topic. In RabbitMQ, this value is ignored. With Kafka, this value is the starting index on the topic.
+	Sequence uint64
 }
 type Stream interface {
 	Read(ctx context.Context, delivery *Delivery) error

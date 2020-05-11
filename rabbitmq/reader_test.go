@@ -54,7 +54,7 @@ func (this *ReaderFixture) TestWhenEstablishingAStream_StartConsumerOnFromUnderl
 		EstablishTopology: true,
 		ExclusiveStream:   true,
 		BufferSize:        2,
-		Queue:             "queue",
+		StreamName:        "queue",
 		Topics:            []string{"topic1", "topic2"},
 	})
 
@@ -76,7 +76,7 @@ func (this *ReaderFixture) TestWhenEstablishingAnExclusiveStreamWithExisting_Ret
 		EstablishTopology: true,
 		ExclusiveStream:   true,
 		BufferSize:        2,
-		Queue:             "queue",
+		StreamName:        "queue",
 		Topics:            []string{"topic1", "topic2"},
 	})
 
@@ -104,7 +104,7 @@ func (this *ReaderFixture) TestWhenEstablishingTopologyDeclareQueueFails_CloseCh
 }
 func (this *ReaderFixture) TestWhenEstablishingTopologyDeclareExchangeFails_CloseChannelAndReturnError() {
 	this.declareExchangeError = errors.New("")
-	config := messaging.StreamConfig{EstablishTopology: true, Queue: "queue", Topics: []string{"exchange"}}
+	config := messaging.StreamConfig{EstablishTopology: true, StreamName: "queue", Topics: []string{"exchange"}}
 
 	stream, err := this.reader.Stream(context.Background(), config)
 
@@ -114,7 +114,7 @@ func (this *ReaderFixture) TestWhenEstablishingTopologyDeclareExchangeFails_Clos
 }
 func (this *ReaderFixture) TestWhenEstablishingTopologyBindQueueFails_CloseChannelAndReturnError() {
 	this.bindQueueError = errors.New("")
-	config := messaging.StreamConfig{EstablishTopology: true, Queue: "queue", Topics: []string{"exchange"}}
+	config := messaging.StreamConfig{EstablishTopology: true, StreamName: "queue", Topics: []string{"exchange"}}
 
 	stream, err := this.reader.Stream(context.Background(), config)
 

@@ -171,7 +171,7 @@ func (this *ConnectorFixture) TestWhenOpeningStreamFails_ReturnUnderlyingError()
 	this.streamError = errors.New("")
 	connection, _ := this.connector.Connect(this.originalContext)
 	reader, _ := connection.Reader(this.originalContext)
-	config := messaging.StreamConfig{Queue: "queue"}
+	config := messaging.StreamConfig{StreamName: "queue"}
 
 	_, err := reader.Stream(this.originalContext, config)
 
