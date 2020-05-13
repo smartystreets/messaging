@@ -20,6 +20,7 @@ type defaultWriter struct {
 }
 
 func newWriter(inner adapter.Channel, config configuration) messaging.CommitWriter {
+	config.Logger.Printf("[INFO] Writer channel established on AMQP connection.")
 	return defaultWriter{
 		inner:         inner,
 		topologyPanic: config.TopologyFailurePanic,
