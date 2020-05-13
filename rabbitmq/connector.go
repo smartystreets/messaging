@@ -12,7 +12,7 @@ import (
 type defaultConnector struct {
 	inner   adapter.Connector
 	dialer  netDialer
-	broker  func() BrokerEndpoint
+	broker  brokerEndpoint
 	config  configuration
 	monitor monitor
 	logger  logger
@@ -54,12 +54,11 @@ func (this *defaultConnector) Connect(ctx context.Context) (messaging.Connection
 	return this.active[len(this.active)-1], nil
 }
 func (this *defaultConnector) configuration() (string, adapter.Config) {
-	broker := this.broker()
-	username, password := parseAuthentication(broker.Address.User)
-	return broker.Address.Host, adapter.Config{
+	username, password := parseAuthentication(this.broker.Address.User)
+	return this.broker.Address.Host, adapter.Config{
 		Username:    username,
 		Password:    password,
-		VirtualHost: broker.Address.Path,
+		VirtualHost: this.broker.Address.Path,
 	}
 }
 func parseAuthentication(info *url.Userinfo) (string, string) {

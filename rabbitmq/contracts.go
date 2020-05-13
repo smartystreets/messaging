@@ -6,7 +6,7 @@ import (
 	"net/url"
 )
 
-type BrokerEndpoint struct {
+type brokerEndpoint struct {
 	Address   url.URL
 	TLSConfig *tls.Config
 }

@@ -19,7 +19,7 @@ type (
 
 type tlsDialer struct {
 	netDialer
-	endpoint func() BrokerEndpoint
+	endpoint brokerEndpoint
 	client   tlsClientFunc
 }
 
@@ -33,16 +33,15 @@ func (this tlsDialer) DialContext(ctx context.Context, network, address string) 
 		return nil, err
 	}
 
-	target := this.endpoint()
-	if target.TLSConfig == nil || target.Address.Scheme != "amqps" {
+	if this.endpoint.TLSConfig == nil || this.endpoint.Address.Scheme != "amqps" {
 		return conn, nil
 	}
 
-	if len(target.TLSConfig.ServerName) == 0 {
-		target.TLSConfig.ServerName, _, _ = net.SplitHostPort(target.Address.Host)
+	if len(this.endpoint.TLSConfig.ServerName) == 0 {
+		this.endpoint.TLSConfig.ServerName, _, _ = net.SplitHostPort(this.endpoint.Address.Host)
 	}
 
-	tlsConn := this.client(conn, target.TLSConfig)
+	tlsConn := this.client(conn, this.endpoint.TLSConfig)
 	if err = tlsConn.Handshake(); err != nil {
 		_ = conn.Close()
 		return nil, err

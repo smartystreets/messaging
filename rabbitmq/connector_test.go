@@ -44,7 +44,7 @@ func (this *ConnectorFixture) Setup() {
 }
 func (this *ConnectorFixture) initializeConnector() {
 	this.connector = New(
-		Options.StaticAddress(this.brokerAddress),
+		Options.Address(this.brokerAddress),
 		Options.Connector(this),
 		Options.Dialer(this),
 	)

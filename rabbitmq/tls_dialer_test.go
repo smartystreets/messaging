@@ -47,8 +47,8 @@ func (this *DialerFixture) Setup() {
 func (this *DialerFixture) initializeTLSDialer() {
 	config := configuration{}
 	Options.apply(
-		Options.StaticAddress(this.brokerAddress),
-		Options.StaticTLSConfig(this.tlsConfig),
+		Options.Address(this.brokerAddress),
+		Options.TLSConfig(this.tlsConfig),
 		Options.TLSClient(this.tlsClient),
 	)(&config)
 	this.dialer = newTLSDialer(this, config)

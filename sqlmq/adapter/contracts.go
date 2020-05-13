@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"io"
-	"sync/atomic"
 )
 
 func New(value *sql.DB) Handle { return sqlDB{DB: value} }
@@ -15,7 +14,6 @@ func Open(driver, dataSource string) Handle {
 		return New(handle)
 	}
 }
-func Dynamic(value atomic.Value) Handle { return newDynamic(value) }
 
 type Handle interface {
 	ReadWriter

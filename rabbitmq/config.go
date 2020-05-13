@@ -17,9 +17,9 @@ func New(options ...option) messaging.Connector {
 }
 
 type configuration struct {
-	Endpoint             func() BrokerEndpoint
 	Address              url.URL
 	TLSConfig            *tls.Config
+	Endpoint             brokerEndpoint
 	TLSClient            tlsClientFunc
 	Dialer               netDialer
 	Connector            adapter.Connector
@@ -34,13 +34,10 @@ var Options singleton
 type singleton struct{}
 type option func(*configuration)
 
-func (singleton) DynamicAddress(value func() BrokerEndpoint) option {
-	return func(this *configuration) { this.Endpoint = value }
-}
-func (singleton) StaticAddress(value string) option {
+func (singleton) Address(value string) option {
 	return func(this *configuration) { address, _ := url.Parse(value); this.Address = *address }
 }
-func (singleton) StaticTLSConfig(value *tls.Config) option {
+func (singleton) TLSConfig(value *tls.Config) option {
 	return func(this *configuration) { this.TLSConfig = value }
 }
 func (singleton) Connector(value adapter.Connector) option {
@@ -70,9 +67,7 @@ func (singleton) apply(options ...option) option {
 			option(this)
 		}
 
-		if this.Endpoint == nil {
-			this.Endpoint = this.defaultBrokerEndpoint
-		}
+		this.Endpoint = brokerEndpoint{Address: this.Address, TLSConfig: this.TLSConfig}
 
 		if this.TLSClient == nil {
 			this.TLSClient = this.defaultTLSClient
@@ -106,8 +101,8 @@ func (singleton) defaults(options ...option) []option {
 	}
 
 	return append([]option{
-		Options.StaticAddress(defaultAddress),
-		Options.StaticTLSConfig(defaultTLS),
+		Options.Address(defaultAddress),
+		Options.TLSConfig(defaultTLS),
 		Options.Connector(adapter.New()),
 		Options.PanicOnTopologyError(defaultTopologyFailurePanic),
 		Options.Logger(defaultLogger),
@@ -116,9 +111,6 @@ func (singleton) defaults(options ...option) []option {
 	}, options...)
 }
 
-func (this configuration) defaultBrokerEndpoint() BrokerEndpoint {
-	return BrokerEndpoint{Address: this.Address, TLSConfig: this.TLSConfig}
-}
 func (this configuration) defaultTLSClient(conn net.Conn, config *tls.Config) tlsConn {
 	return tls.Client(conn, config)
 }
