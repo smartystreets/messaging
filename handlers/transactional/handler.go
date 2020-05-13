@@ -18,7 +18,7 @@ func (this handler) Handle(ctx context.Context, messages ...interface{}) {
 	connection, err := this.connector.Connect(ctx)
 	if err != nil {
 		this.logger.Printf("[WARN] Unable to begin transaction [%s].", err)
-		this.monitor.Begin(err)
+		this.monitor.TransactionStarted(err)
 		panic(err)
 	}
 
@@ -27,21 +27,21 @@ func (this handler) Handle(ctx context.Context, messages ...interface{}) {
 	writer, err := connection.CommitWriter(txCtx)
 	if err != nil {
 		this.logger.Printf("[WARN] Unable to begin transaction [%s].", err)
-		this.monitor.Begin(err)
+		this.monitor.TransactionStarted(err)
 		panic(err)
 	}
 
-	this.monitor.Begin(nil)
+	this.monitor.TransactionStarted(nil)
 	txCtx.Writer = writer
 	handler := this.factory(txCtx.State())
 	handler.Handle(ctx, messages...)
 	if err := writer.Commit(); err != nil {
 		this.logger.Printf("[WARN] Unable to commit transaction [%s].", err)
-		this.monitor.Commit(err)
+		this.monitor.TransactionCommitted(err)
 		panic(err)
 	}
 
-	this.monitor.Commit(nil)
+	this.monitor.TransactionCommitted(nil)
 }
 func (this handler) finally(ctx *transactionalContext, err interface{}) {
 	defer func() { _ = ctx.Close() }()
@@ -50,8 +50,7 @@ func (this handler) finally(ctx *transactionalContext, err interface{}) {
 	}
 
 	if ctx.Writer != nil {
-		_ = ctx.Writer.Rollback()
-		this.monitor.Rollback()
+		this.monitor.TransactionRolledBack(ctx.Writer.Rollback())
 	}
 
 	panic(err)

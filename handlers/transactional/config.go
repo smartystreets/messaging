@@ -26,6 +26,6 @@ type nop struct{}
 
 func (nop) Printf(_ string, _ ...interface{}) {}
 
-func (nop) Begin(_ error)  {}
-func (nop) Commit(_ error) {}
-func (nop) Rollback()      {}
+func (nop) TransactionStarted(_ error)    {}
+func (nop) TransactionCommitted(_ error)  {}
+func (nop) TransactionRolledBack(_ error) {}

@@ -16,11 +16,10 @@ func New(connector messaging.Connector, factory handlerFunc, options ...option) 
 	return this
 }
 
-// TODO
 type monitor interface {
-	Begin(error)
-	Commit(error)
-	Rollback()
+	TransactionStarted(error)
+	TransactionCommitted(error)
+	TransactionRolledBack(error)
 }
 type logger interface {
 	Printf(format string, args ...interface{})

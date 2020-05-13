@@ -180,11 +180,11 @@ func (this *Fixture) Handle(ctx context.Context, messages ...interface{}) {
 
 type FakeMonitor struct{ fixture *Fixture }
 
-func (this *FakeMonitor) Begin(err error) {
+func (this *FakeMonitor) TransactionStarted(err error) {
 	this.fixture.monitorBeginErrors = append(this.fixture.monitorBeginErrors, err)
 }
-func (this *FakeMonitor) Rollback() { this.fixture.monitorRollbackCount++ }
-func (this *FakeMonitor) Commit(err error) {
+func (this *FakeMonitor) TransactionRolledBack(_ error) { this.fixture.monitorRollbackCount++ }
+func (this *FakeMonitor) TransactionCommitted(err error) {
 	if err == nil {
 		this.fixture.monitorCommitCount++
 	}
