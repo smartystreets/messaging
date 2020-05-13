@@ -11,8 +11,8 @@ import (
 type defaultConnection struct {
 	inner   adapter.Connection
 	config  configuration
-	logger  messaging.Logger
-	monitor Monitor
+	logger  logger
+	monitor monitor
 	closer  sync.Once
 }
 

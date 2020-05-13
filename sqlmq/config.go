@@ -20,8 +20,8 @@ type configuration struct {
 	SQLTxOptions  sql.TxOptions
 	Now           func() time.Time
 	Sleep         time.Duration
-	Logger        messaging.Logger
-	Monitor       Monitor
+	Logger        logger
+	Monitor       monitor
 
 	MessageStore messageStore
 	Sender       messaging.Writer
@@ -75,10 +75,10 @@ func (singleton) MessageStore(value messageStore) option {
 func (singleton) MessageSender(value messaging.Writer) option {
 	return func(this *configuration) { this.Sender = value }
 }
-func (singleton) Logger(value messaging.Logger) option {
+func (singleton) Logger(value logger) option {
 	return func(this *configuration) { this.Logger = value }
 }
-func (singleton) Monitor(value Monitor) option {
+func (singleton) Monitor(value monitor) option {
 	return func(this *configuration) { this.Monitor = value }
 }
 
@@ -123,7 +123,6 @@ func (singleton) defaults(options ...option) []option {
 type nop struct{}
 
 func (nop) Printf(_ string, _ ...interface{}) {}
-func (nop) Println(_ ...interface{})          {}
 
 func (nop) MessageReceived(_ int)  {}
 func (nop) MessageStored(_ int)    {}

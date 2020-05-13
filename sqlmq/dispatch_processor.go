@@ -15,8 +15,8 @@ type dispatchProcessor struct {
 	retryWait time.Duration
 	store     messageStore
 	sender    messaging.Writer
-	logger    messaging.Logger
-	monitor   Monitor
+	logger    logger
+	monitor   monitor
 
 	buffer   []messaging.Dispatch
 	latestID uint64

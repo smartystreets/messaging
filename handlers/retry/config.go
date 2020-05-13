@@ -2,8 +2,6 @@ package retry
 
 import (
 	"time"
-
-	"github.com/smartystreets/messaging/v3"
 )
 
 var Options singleton
@@ -17,10 +15,10 @@ func (singleton) Timeout(value time.Duration) option {
 func (singleton) MaxAttempts(value uint32) option {
 	return func(this *handler) { this.maxAttempts = int(value) }
 }
-func (singleton) Logger(value messaging.Logger) option {
+func (singleton) Logger(value logger) option {
 	return func(this *handler) { this.logger = value }
 }
-func (singleton) Monitor(value Monitor) option {
+func (singleton) Monitor(value monitor) option {
 	return func(this *handler) { this.notify = value }
 }
 func (singleton) LogStackTrace(value bool) option {
@@ -46,6 +44,5 @@ func (singleton) defaults(options ...option) []option {
 type nop struct{}
 
 func (nop) Printf(_ string, _ ...interface{}) {}
-func (nop) Println(_ ...interface{})          {}
 
 func (nop) Attempt(_ int, _ interface{}) {}

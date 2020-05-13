@@ -17,8 +17,8 @@ type defaultStream struct {
 	streamID   string
 	batchAck   bool
 	closer     sync.Once
-	logger     messaging.Logger
-	monitor    Monitor
+	logger     logger
+	monitor    monitor
 }
 
 func newStream(channel adapter.Channel, deliveries <-chan amqp.Delivery, id string, exclusive bool, config configuration) messaging.Stream {

@@ -73,7 +73,7 @@ func (this defaultReader) Stream(ctx context.Context, config messaging.StreamCon
 type defaultStream struct {
 	messaging.Stream
 	decoder DeliveryDecoder
-	monitor Monitor
+	monitor monitor
 }
 
 func newStream(inner messaging.Stream, config configuration) messaging.Stream {
@@ -92,7 +92,7 @@ func (this defaultStream) Read(ctx context.Context, delivery *messaging.Delivery
 type defaultWriter struct {
 	messaging.CommitWriter
 	encoder DispatchEncoder
-	monitor Monitor
+	monitor monitor
 }
 
 func newWriter(inner messaging.CommitWriter, config configuration) messaging.CommitWriter {

@@ -22,8 +22,8 @@ type configuration struct {
 	Deserializers map[string]Deserializer
 	Serializer    Serializer
 
-	Logger  messaging.Logger
-	Monitor Monitor
+	Logger  logger
+	Monitor monitor
 
 	Connector messaging.Connector
 	Encoder   DispatchEncoder
@@ -57,10 +57,10 @@ func (singleton) ReadTypes(value map[string]reflect.Type) option {
 func (singleton) WriteTypes(value map[reflect.Type]string) option {
 	return func(this *configuration) { this.WriteTypes = value }
 }
-func (singleton) Logger(value messaging.Logger) option {
+func (singleton) Logger(value logger) option {
 	return func(this *configuration) { this.Logger = value }
 }
-func (singleton) Monitor(value Monitor) option {
+func (singleton) Monitor(value monitor) option {
 	return func(this *configuration) { this.Monitor = value }
 }
 
@@ -95,7 +95,6 @@ func (singleton) defaults(options ...option) []option {
 type nop struct{}
 
 func (nop) Printf(_ string, _ ...interface{}) {}
-func (nop) Println(_ ...interface{})          {}
 
 func (nop) MessageEncoded(_ error) {}
 func (nop) MessageDecoded(_ error) {}

@@ -17,7 +17,7 @@ func New(connector messaging.Connector, options ...option) messaging.ListenClose
 }
 
 type config struct {
-	logger        messaging.Logger
+	logger        logger
 	subscriptions []Subscription
 }
 
@@ -26,7 +26,7 @@ var Options singleton
 type singleton struct{}
 type option func(*config)
 
-func (singleton) Logger(value messaging.Logger) option {
+func (singleton) Logger(value logger) option {
 	return func(this *config) { this.logger = value }
 }
 func (singleton) Subscriptions(values ...Subscription) option {
@@ -51,4 +51,3 @@ func (singleton) defaults(options ...option) []option {
 type nop struct{}
 
 func (nop) Printf(_ string, _ ...interface{}) {}
-func (nop) Println(_ ...interface{})          {}

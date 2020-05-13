@@ -11,7 +11,7 @@ type defaultDispatchEncoder struct {
 	messageTypes map[reflect.Type]string
 	contentType  string
 	serializer   Serializer
-	logger       messaging.Logger
+	logger       logger
 }
 
 func newDispatchEncoder(config configuration) DispatchEncoder {

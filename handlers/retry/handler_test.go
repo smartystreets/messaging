@@ -146,9 +146,6 @@ func (this *Fixture) Handle(ctx context.Context, messages ...interface{}) {
 	}
 }
 
-func (this *Fixture) Println(args ...interface{}) {
-	this.loggedMessages = append(this.loggedMessages, fmt.Sprintln(args...))
-}
 func (this *Fixture) Printf(format string, args ...interface{}) {
 	this.loggedMessages = append(this.loggedMessages, fmt.Sprintf(format, args...))
 }

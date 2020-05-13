@@ -15,8 +15,8 @@ type defaultWriter struct {
 	inner         adapter.Channel
 	topologyPanic bool
 	now           func() time.Time
-	logger        messaging.Logger
-	monitor       Monitor
+	logger        logger
+	monitor       monitor
 }
 
 func newWriter(inner adapter.Channel, config configuration) messaging.CommitWriter {

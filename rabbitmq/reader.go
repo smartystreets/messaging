@@ -18,7 +18,7 @@ type defaultReader struct {
 	config  configuration
 	mutex   sync.Mutex
 	counter uint64
-	logger  messaging.Logger
+	logger  logger
 
 	hasExclusiveStream bool
 }

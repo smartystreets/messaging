@@ -12,8 +12,8 @@ type dispatchReceiver struct {
 	tx      adapter.Transaction
 	output  chan messaging.Dispatch
 	store   messageStore
-	logger  messaging.Logger
-	monitor Monitor
+	logger  logger
+	monitor monitor
 
 	buffer []messaging.Dispatch
 }

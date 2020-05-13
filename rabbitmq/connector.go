@@ -14,8 +14,8 @@ type defaultConnector struct {
 	dialer  netDialer
 	broker  func() BrokerEndpoint
 	config  configuration
-	monitor Monitor
-	logger  messaging.Logger
+	monitor monitor
+	logger  logger
 
 	active []messaging.Connection
 	mutex  sync.Mutex

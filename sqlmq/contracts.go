@@ -19,9 +19,13 @@ type transactionalContext interface {
 	Store(tx *sql.Tx) // used by transactional handler
 }
 
-type Monitor interface {
+type monitor interface {
 	MessageReceived(count int)
 	MessageStored(count int)
 	MessagePublished(count int)
 	MessageConfirmed(count int)
+}
+
+type logger interface {
+	Printf(format string, args ...interface{})
 }

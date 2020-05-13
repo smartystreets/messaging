@@ -23,8 +23,8 @@ type configuration struct {
 	TLSClient            tlsClientFunc
 	Dialer               netDialer
 	Connector            adapter.Connector
-	Logger               messaging.Logger
-	Monitor              Monitor
+	Logger               logger
+	Monitor              monitor
 	Now                  func() time.Time
 	TopologyFailurePanic bool
 }
@@ -55,10 +55,10 @@ func (singleton) TLSClient(value tlsClientFunc) option {
 func (singleton) PanicOnTopologyError(value bool) option {
 	return func(this *configuration) { this.TopologyFailurePanic = value }
 }
-func (singleton) Logger(value messaging.Logger) option {
+func (singleton) Logger(value logger) option {
 	return func(this *configuration) { this.Logger = value }
 }
-func (singleton) Monitor(value Monitor) option {
+func (singleton) Monitor(value monitor) option {
 	return func(this *configuration) { this.Monitor = value }
 }
 func (singleton) Now(value func() time.Time) option {
@@ -129,7 +129,6 @@ func (this configuration) defaultDialer() netDialer {
 type nop struct{}
 
 func (nop) Printf(_ string, _ ...interface{}) {}
-func (nop) Println(_ ...interface{})          {}
 
 func (nop) ConnectionOpened(_ error)               {}
 func (nop) ConnectionClosed()                      {}

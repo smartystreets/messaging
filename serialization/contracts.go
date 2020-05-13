@@ -22,9 +22,12 @@ type DispatchEncoder interface {
 	Encode(*messaging.Dispatch) error
 }
 
-type Monitor interface {
+type monitor interface {
 	MessageEncoded(error)
 	MessageDecoded(error)
+}
+type logger interface {
+	Printf(format string, args ...interface{})
 }
 
 var (

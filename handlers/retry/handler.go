@@ -12,8 +12,8 @@ type handler struct {
 	messaging.Handler
 	timeout     time.Duration
 	maxAttempts int
-	logger      messaging.Logger
-	notify      Monitor
+	logger      logger
+	notify      monitor
 	stackTrace  bool
 }
 

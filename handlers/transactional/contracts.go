@@ -16,10 +16,14 @@ func New(connector messaging.Connector, factory handlerFunc, options ...option) 
 	return this
 }
 
-type Monitor interface {
+// TODO
+type monitor interface {
 	Begin(error)
 	Commit(error)
 	Rollback()
+}
+type logger interface {
+	Printf(format string, args ...interface{})
 }
 
 type State struct {

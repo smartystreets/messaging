@@ -10,7 +10,7 @@ import (
 type defaultDeliveryDecoder struct {
 	messageTypes map[string]reflect.Type
 	contentTypes map[string]Deserializer
-	logger       messaging.Logger
+	logger       logger
 }
 
 func newDeliveryDecoder(config configuration) DeliveryDecoder {

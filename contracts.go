@@ -107,8 +107,3 @@ type ListenCloser interface {
 	Listener
 	io.Closer
 }
-
-type Logger interface {
-	Printf(format string, args ...interface{})
-	Println(args ...interface{})
-}

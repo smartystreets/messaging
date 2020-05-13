@@ -11,7 +11,7 @@ type BrokerEndpoint struct {
 	TLSConfig *tls.Config
 }
 
-type Monitor interface {
+type monitor interface {
 	ConnectionOpened(error)
 	ConnectionClosed()
 	DispatchPublished()
@@ -19,6 +19,9 @@ type Monitor interface {
 	DeliveryAcknowledged(uint16, error)
 	TransactionCommitted(error)
 	TransactionRolledBack(error)
+}
+type logger interface {
+	Printf(format string, args ...interface{})
 }
 
 var (

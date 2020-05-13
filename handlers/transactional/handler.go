@@ -10,8 +10,8 @@ import (
 type handler struct {
 	connector messaging.Connector
 	factory   handlerFunc
-	monitor   Monitor
-	logger    messaging.Logger
+	monitor   monitor
+	logger    logger
 }
 
 func (this handler) Handle(ctx context.Context, messages ...interface{}) {
