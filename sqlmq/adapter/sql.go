@@ -5,9 +5,7 @@ import (
 	"database/sql"
 )
 
-type sqlDB struct {
-	*sql.DB
-}
+type sqlDB struct{ *sql.DB }
 
 func (this sqlDB) QueryContext(ctx context.Context, statement string, args ...interface{}) (QueryResult, error) {
 	return this.DB.QueryContext(ctx, statement, args...)
