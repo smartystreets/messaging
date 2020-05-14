@@ -34,23 +34,23 @@ func (this *ConnectionPoolFixture) Setup() {
 func (this *ConnectionPoolFixture) TestWhenConnectFails_ItShouldReturnError() {
 	this.connectError = errors.New("")
 
-	connection, err := this.pool.Current(this.ctx)
+	connection, err := this.pool.Active(this.ctx)
 
 	this.So(connection, should.BeNil)
 	this.So(err, should.Equal, this.connectError)
 	this.So(this.connectContext, should.Equal, this.ctx)
 }
 func (this *ConnectionPoolFixture) TestWhenConnecting_ReturnUnderlyingConnection() {
-	connection, err := this.pool.Current(this.ctx)
+	connection, err := this.pool.Active(this.ctx)
 
 	this.So(connection, should.Equal, this.opened[0])
 	this.So(err, should.BeNil)
 	this.So(this.connectContext, should.Equal, this.ctx)
 }
 func (this *ConnectionPoolFixture) TestWhenOpeningAConnectionTwice_ItShouldConnectOnceAndGiveSameConnectionInstance() {
-	first, _ := this.pool.Current(this.ctx)
+	first, _ := this.pool.Active(this.ctx)
 
-	second, err := this.pool.Current(this.ctx)
+	second, err := this.pool.Active(this.ctx)
 
 	this.So(first, should.Equal, second)
 	this.So(err, should.BeNil)
@@ -58,32 +58,32 @@ func (this *ConnectionPoolFixture) TestWhenOpeningAConnectionTwice_ItShouldConne
 }
 
 func (this *ConnectionPoolFixture) TestWhenReleasingAConnection_ItShouldCloseTheReleasedConnection() {
-	connection, _ := this.pool.Current(this.ctx)
+	connection, _ := this.pool.Active(this.ctx)
 
-	this.pool.Release(connection)
+	this.pool.Dispose(connection)
 
 	this.So(this.opened[0].closeCount, should.Equal, 1)
 }
 func (this *ConnectionPoolFixture) TestWhenReleasingANilConnection_Nop() {
-	this.So(func() { this.pool.Release(nil) }, should.NotPanic)
+	this.So(func() { this.pool.Dispose(nil) }, should.NotPanic)
 }
 func (this *ConnectionPoolFixture) TestWhenReleasingCurrentConnection_ItShouldCauseCurrentToReturnNewConnection() {
-	first, _ := this.pool.Current(this.ctx)
-	this.pool.Release(first)
+	first, _ := this.pool.Active(this.ctx)
+	this.pool.Dispose(first)
 
-	second, _ := this.pool.Current(this.ctx)
+	second, _ := this.pool.Active(this.ctx)
 
 	this.So(second, should.NotBeNil)
 	this.So(first, should.NotEqual, second)
 	this.So(this.connectCount, should.Equal, 2)
 }
 func (this *ConnectionPoolFixture) TestWhenReleasingPriorConnection_ItShouldStillGiveBackCurrentConnection() {
-	first, _ := this.pool.Current(this.ctx)
-	this.pool.Release(first)
-	secondA, _ := this.pool.Current(this.ctx)
-	this.pool.Release(first) // release first again
+	first, _ := this.pool.Active(this.ctx)
+	this.pool.Dispose(first)
+	secondA, _ := this.pool.Active(this.ctx)
+	this.pool.Dispose(first) // release first again
 
-	secondB, _ := this.pool.Current(this.ctx)
+	secondB, _ := this.pool.Active(this.ctx)
 
 	this.So(secondA, should.Equal, secondB)
 	this.So(secondB, should.NotBeNil)
@@ -91,7 +91,7 @@ func (this *ConnectionPoolFixture) TestWhenReleasingPriorConnection_ItShouldStil
 }
 
 func (this *ConnectionPoolFixture) TestWhenClosing_ReleaseCurrentConnectionIfAny() {
-	_, _ = this.pool.Current(this.ctx)
+	_, _ = this.pool.Active(this.ctx)
 
 	_ = this.pool.Close()
 

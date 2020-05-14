@@ -32,11 +32,11 @@ func newSubscriber(pool connectionPool, subscription Subscription, softContext c
 }
 
 func (this defaultSubscriber) Listen() {
-	connection, err := this.pool.Current(this.softContext)
+	connection, err := this.pool.Active(this.softContext)
 	if err != nil {
 		return
 	}
-	defer this.pool.Release(connection)
+	defer this.pool.Dispose(connection)
 
 	reader, err := connection.Reader(this.softContext)
 	if err != nil {

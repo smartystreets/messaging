@@ -191,12 +191,12 @@ func (this *SubscriberFixture) TestWhenHardShutdownIsInvoked_StillWaitForWorkers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ConnectionPool
-func (this *SubscriberFixture) Current(ctx context.Context) (messaging.Connection, error) {
+func (this *SubscriberFixture) Active(ctx context.Context) (messaging.Connection, error) {
 	this.currentCount++
 	this.currentContext = ctx
 	return this, this.currentError
 }
-func (this *SubscriberFixture) Release(connection messaging.Connection) {
+func (this *SubscriberFixture) Dispose(connection messaging.Connection) {
 	this.releasedConnections = append(this.releasedConnections, connection)
 }
 
