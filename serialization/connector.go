@@ -84,9 +84,7 @@ func (this defaultStream) Read(ctx context.Context, delivery *messaging.Delivery
 		return err
 	}
 
-	err := this.decoder.Decode(delivery)
-	this.monitor.MessageDecoded(err)
-	return err
+	return this.decoder.Decode(delivery)
 }
 
 type defaultWriter struct {
@@ -100,9 +98,7 @@ func newWriter(inner messaging.CommitWriter, config configuration) messaging.Com
 }
 func (this defaultWriter) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {
 	for i, _ := range dispatches {
-		err := this.encoder.Encode(&dispatches[i])
-		this.monitor.MessageEncoded(err)
-		if err != nil {
+		if err := this.encoder.Encode(&dispatches[i]); err != nil {
 			return -1, err
 		}
 	}

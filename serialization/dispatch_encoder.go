@@ -11,6 +11,7 @@ type defaultDispatchEncoder struct {
 	messageTypes map[reflect.Type]string
 	contentType  string
 	serializer   Serializer
+	monitor      monitor
 	logger       logger
 }
 
@@ -19,6 +20,7 @@ func newDispatchEncoder(config configuration) DispatchEncoder {
 		messageTypes: config.WriteTypes,
 		contentType:  config.Serializer.ContentType(),
 		serializer:   config.Serializer,
+		monitor:      config.Monitor,
 		logger:       config.Logger,
 	}
 }
@@ -31,16 +33,19 @@ func (this defaultDispatchEncoder) Encode(dispatch *messaging.Dispatch) error {
 	instanceType := reflect.TypeOf(dispatch.Message)
 	messageType, found := this.messageTypes[reflect.TypeOf(dispatch.Message)]
 	if !found {
+		this.monitor.MessageEncoded(ErrMessageTypeNotFound)
 		this.logger.Printf("[WARN] Unable to encode message of type [%s], message type not found.", reflect.TypeOf(dispatch.Message))
 		return wrapError(fmt.Errorf("%w: [%s]", ErrMessageTypeNotFound, instanceType.Name()))
 	}
 
 	raw, err := this.serializer.Serialize(dispatch.Message)
 	if err != nil {
+		this.monitor.MessageEncoded(err)
 		this.logger.Printf("[WARN] Unable to serialize message of type [%s]: %s", reflect.TypeOf(dispatch.Message), err)
 		return wrapError(err)
 	}
 
+	this.monitor.MessageEncoded(nil)
 	dispatch.ContentType = this.contentType
 	dispatch.MessageType = messageType
 	dispatch.Payload = raw
