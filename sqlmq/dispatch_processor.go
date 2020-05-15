@@ -41,22 +41,23 @@ func (this *dispatchProcessor) Listen() {
 	defer this.cleanup()
 
 	var waiter sync.WaitGroup
-	waiter.Add(2)
 	defer waiter.Wait()
 
-	go func() {
-		defer waiter.Done()
-		for this.isAlive() && !this.readPending() {
-			this.sleep()
-		}
-	}()
-
-	go func() {
-		defer waiter.Done()
-		for this.isAlive() && !this.write() {
-			this.sleep()
-		}
-	}()
+	waiter.Add(2)
+	go this.listenInitialize(&waiter)
+	go this.listenProcess(&waiter)
+}
+func (this *dispatchProcessor) listenInitialize(waiter *sync.WaitGroup) {
+	defer waiter.Done()
+	for this.isAlive() && !this.readPending() {
+		this.sleep()
+	}
+}
+func (this *dispatchProcessor) listenProcess(waiter *sync.WaitGroup) {
+	defer waiter.Done()
+	for this.isAlive() && !this.write() {
+		this.sleep()
+	}
 }
 
 func (this *dispatchProcessor) readPending() bool {

@@ -44,16 +44,14 @@ func (this *defaultWorker) Listen() {
 	defer waiter.Wait()
 
 	waiter.Add(1)
-	go func() {
-		defer waiter.Done()
-		this.readFromStream()
-	}()
-
+	go this.readFromStream(&waiter)
 	this.deliverToHandler()
 }
 
-func (this *defaultWorker) readFromStream() {
+func (this *defaultWorker) readFromStream(waiter *sync.WaitGroup) {
+	defer waiter.Done()
 	defer close(this.channelBuffer)
+
 	for {
 		var delivery messaging.Delivery
 		if err := this.stream.Read(this.hardContext, &delivery); err != nil {
