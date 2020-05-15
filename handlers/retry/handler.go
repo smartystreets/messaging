@@ -31,7 +31,7 @@ func (this handler) handle(ctx context.Context, attempt int, messages ...interfa
 	return success
 }
 func (this handler) finally(ctx context.Context, attempt int, err interface{}) bool {
-	this.monitor.Attempt(attempt, err)
+	this.monitor.HandleAttempted(attempt, err)
 
 	if err != nil {
 		this.handleFailure(ctx, attempt, err)

@@ -64,4 +64,4 @@ type nop struct{}
 
 func (nop) Printf(_ string, _ ...interface{}) {}
 
-func (nop) Attempt(_ int, _ interface{}) {}
+func (nop) HandleAttempted(_ int, _ interface{}) {}

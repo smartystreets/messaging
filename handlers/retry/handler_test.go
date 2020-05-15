@@ -165,7 +165,7 @@ func (this *Fixture) Printf(format string, args ...interface{}) {
 	this.loggedMessages = append(this.loggedMessages, fmt.Sprintf(format, args...))
 }
 
-func (this *Fixture) Attempt(attempt int, err interface{}) {
+func (this *Fixture) HandleAttempted(attempt int, err interface{}) {
 	this.monitoredAttemptCount = attempt
 	this.monitoredErrors = append(this.monitoredErrors, err)
 }
