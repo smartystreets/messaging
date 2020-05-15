@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -72,7 +73,7 @@ func (this dispatchStore) Load(ctx context.Context, id uint64) (results []messag
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = rows.Close() }()
+	defer closeResource(rows)
 
 	now := this.now().UTC()
 	for rows.Next() {
@@ -107,6 +108,12 @@ func (this dispatchStore) Confirm(ctx context.Context, dispatches []messaging.Di
 	statement := fmt.Sprintf(statementFormat, now, this.confirmStatement.String())
 	_, err := this.db.ExecContext(ctx, statement)
 	return err
+}
+
+func closeResource(resource io.Closer) {
+	if resource != nil {
+		_ = resource.Close()
+	}
 }
 
 var (

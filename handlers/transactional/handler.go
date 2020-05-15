@@ -3,6 +3,7 @@ package transactional
 import (
 	"context"
 	"database/sql"
+	"io"
 
 	"github.com/smartystreets/messaging/v3"
 )
@@ -44,7 +45,7 @@ func (this handler) Handle(ctx context.Context, messages ...interface{}) {
 	this.monitor.TransactionCommitted(nil)
 }
 func (this handler) finally(ctx *transactionalContext, err interface{}) {
-	defer func() { _ = ctx.Close() }()
+	defer closeResource(ctx)
 	if err == nil {
 		return
 	}
@@ -54,6 +55,11 @@ func (this handler) finally(ctx *transactionalContext, err interface{}) {
 	}
 
 	panic(err)
+}
+func closeResource(resource io.Closer) {
+	if resource != nil {
+		_ = resource.Close()
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
