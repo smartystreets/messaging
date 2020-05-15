@@ -19,7 +19,7 @@ func (singleton) Logger(value logger) option {
 	return func(this *handler) { this.logger = value }
 }
 func (singleton) Monitor(value monitor) option {
-	return func(this *handler) { this.notify = value }
+	return func(this *handler) { this.monitor = value }
 }
 func (singleton) LogStackTrace(value bool) option {
 	return func(this *handler) { this.stackTrace = value }
