@@ -138,7 +138,7 @@ func (this *Fixture) TestWhenRecoveryGivesSpecifiedError_DoNotSleepAndRetryImmed
 
 	started := time.Now().UTC()
 	this.So(this.handle, should.PanicWith, ErrMaxRetriesExceeded)
-	this.So(time.Since(started), should.BeLessThan, time.Millisecond)
+	this.So(time.Since(started), should.BeLessThan, time.Millisecond*10)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
