@@ -15,6 +15,7 @@ type handler struct {
 	logger      logger
 	monitor     monitor
 	stackTrace  bool
+	immediate   map[interface{}]struct{}
 }
 
 func (this handler) Handle(ctx context.Context, messages ...interface{}) {
@@ -44,7 +45,7 @@ func (this handler) finally(ctx context.Context, attempt int, err interface{}) b
 func (this handler) handleFailure(ctx context.Context, attempt int, err interface{}) {
 	this.logFailure(attempt, err)
 	this.panicOnTooManyAttempts(attempt)
-	this.sleep(ctx)
+	this.sleep(ctx, err)
 }
 func (this handler) logFailure(attempt int, err interface{}) {
 	if this.stackTrace {
@@ -58,7 +59,10 @@ func (this handler) panicOnTooManyAttempts(attempt int) {
 		panic(ErrMaxRetriesExceeded)
 	}
 }
-func (this handler) sleep(ctx context.Context) {
+func (this handler) sleep(ctx context.Context, err interface{}) {
+	if _, contains := this.immediate[err]; contains {
+		return
+	}
 	ctx, _ = context.WithTimeout(ctx, this.timeout)
 	<-ctx.Done()
 }

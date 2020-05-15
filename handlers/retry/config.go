@@ -7,7 +7,7 @@ import (
 )
 
 func New(inner messaging.Handler, options ...option) messaging.Handler {
-	this := handler{Handler: inner}
+	this := handler{Handler: inner, immediate: map[interface{}]struct{}{}}
 
 	for _, option := range Options.defaults(options...) {
 		option(&this)
@@ -26,6 +26,13 @@ func (singleton) Timeout(value time.Duration) option {
 }
 func (singleton) MaxAttempts(value uint32) option {
 	return func(this *handler) { this.maxAttempts = int(value) }
+}
+func (singleton) ImmediateRetry(value ...interface{}) option {
+	return func(this *handler) {
+		for _, err := range value {
+			this.immediate[err] = struct{}{}
+		}
+	}
 }
 func (singleton) Logger(value logger) option {
 	return func(this *handler) { this.logger = value }

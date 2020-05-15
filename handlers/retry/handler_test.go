@@ -126,6 +126,21 @@ func (this *Fixture) TestDontLogStackTrace() {
 	this.So(this.loggedMessages[0], should.NotContainSubstring, "debug.Stack")
 }
 
+func (this *Fixture) TestWhenRecoveryGivesSpecifiedError_DoNotSleepAndRetryImmediately() {
+	this.handleError = errors.New("")
+	this.handler = New(this,
+		Options.Logger(this),
+		Options.Monitor(this),
+		Options.MaxAttempts(3),
+		Options.Timeout(time.Millisecond*100),
+		Options.ImmediateRetry(this.handleError),
+	)
+
+	started := time.Now().UTC()
+	this.So(this.handle, should.PanicWith, ErrMaxRetriesExceeded)
+	this.So(time.Since(started), should.BeLessThan, time.Millisecond)
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (this *Fixture) Handle(ctx context.Context, messages ...interface{}) {
