@@ -2,7 +2,19 @@ package retry
 
 import (
 	"time"
+
+	"github.com/smartystreets/messaging/v3"
 )
+
+func New(inner messaging.Handler, options ...option) messaging.Handler {
+	this := handler{Handler: inner}
+
+	for _, option := range Options.defaults(options...) {
+		option(&this)
+	}
+
+	return this
+}
 
 var Options singleton
 
