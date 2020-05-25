@@ -73,6 +73,8 @@ type Dispatch struct {
 	SourceID        uint64
 	MessageID       uint64
 	CorrelationID   uint64
+	// CausationID     uint64
+	// UserID          uint64
 	Timestamp       time.Time
 	Expiration      time.Duration
 	Durable         bool
@@ -90,6 +92,8 @@ type Delivery struct {
 	SourceID        uint64
 	MessageID       uint64
 	CorrelationID   uint64
+	// CausationID     uint64
+	// UserID          uint64
 	Timestamp       time.Time
 	Durable         bool
 	MessageType     string
