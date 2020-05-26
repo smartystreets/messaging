@@ -167,7 +167,7 @@ func (this *DispatchProcessorFixture) TestWhenInitializeOperationDoesNotGetAllPe
 	this.loadMaxResultsPer = 2
 	this.loadError = errors.New("")
 
-	this.listen(time.Millisecond * 25)
+	this.listen(time.Millisecond * 30)
 
 	this.So(this.writeCount, should.Equal, 3)
 	this.So(this.writeContext, should.NotBeNil)
