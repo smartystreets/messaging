@@ -72,9 +72,7 @@ type CommitWriter interface {
 type Dispatch struct {
 	SourceID        uint64
 	MessageID       uint64
-	CorrelationID   uint64
-	// CausationID     uint64
-	// UserID          uint64
+	CorrelationID   uint64 // FUTURE: CausationID and UserID
 	Timestamp       time.Time
 	Expiration      time.Duration
 	Durable         bool
@@ -91,9 +89,7 @@ type Delivery struct {
 	DeliveryID      uint64
 	SourceID        uint64
 	MessageID       uint64
-	CorrelationID   uint64
-	// CausationID     uint64
-	// UserID          uint64
+	CorrelationID   uint64 // FUTURE: CausationID and UserID
 	Timestamp       time.Time
 	Durable         bool
 	MessageType     string
