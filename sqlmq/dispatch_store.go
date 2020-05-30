@@ -82,6 +82,8 @@ func (this dispatchStore) Load(ctx context.Context, id uint64) (results []messag
 			return nil, err
 		}
 
+		dispatch.Durable = true
+		dispatch.ContentType = "application/json"
 		dispatch.Topic = dispatch.MessageType
 		results = append(results, dispatch)
 	}

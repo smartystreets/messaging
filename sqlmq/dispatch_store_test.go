@@ -114,9 +114,9 @@ func (this *DispatchStoreFixture) TestWhenLoading_ItShouldQueryUnderlingStorage(
 	results, err := this.store.Load(this.ctx, 42)
 
 	this.So(results, should.Resemble, []messaging.Dispatch{
-		{MessageID: 42, MessageType: "message-type1", Topic: "message-type1", Payload: []byte{4}, Timestamp: this.now},
-		{MessageID: 43, MessageType: "message-type2", Topic: "message-type2", Payload: []byte{5}, Timestamp: this.now},
-		{MessageID: 44, MessageType: "message-type3", Topic: "message-type3", Payload: []byte{6}, Timestamp: this.now},
+		{MessageID: 42, MessageType: "message-type1", Topic: "message-type1", Payload: []byte{4}, Timestamp: this.now, Durable: true, ContentType: "application/json"},
+		{MessageID: 43, MessageType: "message-type2", Topic: "message-type2", Payload: []byte{5}, Timestamp: this.now, Durable: true, ContentType: "application/json"},
+		{MessageID: 44, MessageType: "message-type3", Topic: "message-type3", Payload: []byte{6}, Timestamp: this.now, Durable: true, ContentType: "application/json"},
 	})
 	this.So(err, should.BeNil)
 	this.So(this.queryStatement, should.Equal, "SELECT id, type, payload FROM Messages WHERE dispatched IS NULL AND id > 42;")
