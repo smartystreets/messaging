@@ -53,8 +53,11 @@ func (this *DispatchStoreFixture) TestWhenNoDispatchesToWrite_DoNotPerformWriteO
 	this.So(this.execCalls, should.BeZeroValue)
 }
 func (this *DispatchStoreFixture) TestWhenStoring_WriteToUnderlyingStoreAndMarkDispatchesWithMessageID() {
+	// https://dev.mysql.com/doc/refman/5.6/en/information-functions.html#function_last-insert-id
+	// > If you insert multiple rows using a single INSERT statement, LAST_INSERT_ID() returns the value generated for
+	// > the first inserted row only.
 	this.rowsAffectedValue = 3
-	this.lastInsertID = 44
+	this.lastInsertID = 42
 	writes := []messaging.Dispatch{
 		{MessageType: "1", Payload: []byte("a")},
 		{MessageType: "2", Payload: []byte("b")},

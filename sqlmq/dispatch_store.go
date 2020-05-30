@@ -45,7 +45,7 @@ func (this dispatchStore) Store(ctx context.Context, writer adapter.Writer, disp
 	}
 
 	for i := uint64(0); i < length; i++ {
-		dispatches[i].MessageID = uint64(identity) - (length - 1 - i)
+		dispatches[i].MessageID = uint64(identity) + i
 	}
 
 	return nil
