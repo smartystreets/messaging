@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/smartystreets/assertions/should"
 	"github.com/smartystreets/gunit"
@@ -32,7 +33,10 @@ func (this *ConfigFixture) Setup() {
 
 func (this *ConfigFixture) TestWhenManagerListens_UnderlyingWorkerStarted() {
 	this.readerError = errors.New("")
-	go closeResource(this.manager)
+	go func() {
+		time.Sleep(time.Millisecond * 5)
+		closeResource(this.manager)
+	}()
 	this.manager.Listen()
 
 	this.So(this.readerContext, should.NotBeNil)

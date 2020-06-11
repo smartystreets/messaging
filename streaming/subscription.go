@@ -17,8 +17,9 @@ type Subscription struct {
 	batchCapacity     uint16
 	handleDelivery    bool
 	bufferTimeout     time.Duration // the amount of time to rest and buffer between batches (instead of going as quickly as possible)
-	shutdownStrategy  ShutdownStrategy
+	reconnectDelay    time.Duration
 	shutdownTimeout   time.Duration
+	shutdownStrategy  ShutdownStrategy
 }
 
 func (this Subscription) streamConfig() messaging.StreamConfig {

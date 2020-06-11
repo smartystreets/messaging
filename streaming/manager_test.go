@@ -31,7 +31,8 @@ type ManagerFixture struct {
 	closeCount  int
 	listenCount int32
 
-	listenSleep time.Duration
+	listenSleep     time.Duration
+	listenExitEarly bool
 }
 
 func (this *ManagerFixture) Setup() {
@@ -59,7 +60,10 @@ func (this *ManagerFixture) TestWhenListening_NewSubscriberListenersCreatedAndSt
 	this.listenSleep = time.Millisecond * 5
 	started := time.Now().UTC()
 
-	go closeResource(this.manager)
+	go func() {
+		time.Sleep(this.listenSleep * 2)
+		closeResource(this.manager)
+	}()
 	this.manager.Listen()
 
 	this.So(time.Since(started), should.BeBetween, this.listenSleep, this.listenSleep*4)
@@ -69,6 +73,20 @@ func (this *ManagerFixture) TestWhenListening_NewSubscriberListenersCreatedAndSt
 	this.So(this.subscriberContext, should.NotEqual, context.Background()) // derivative of it, but not background
 }
 
+func (this *ManagerFixture) TestWhenSubscriberListeningExitsEarly_AdditionalNewSubscriberListenersCreatedAndStarted() {
+	this.listenSleep = 0
+	this.listenExitEarly = true
+
+	go func() {
+		time.Sleep(time.Millisecond * 5)
+		closeResource(this.manager)
+	}()
+	this.manager.Listen()
+
+	this.So(this.subscriberCount, should.BeGreaterThan, len(this.subscriptions))
+	this.So(this.listenCount, should.BeGreaterThan, len(this.subscriptions))
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (this *ManagerFixture) Listen() {
@@ -76,6 +94,10 @@ func (this *ManagerFixture) Listen() {
 	this.listenCount++
 	ctx := this.subscriberContext
 	this.mutex.Unlock()
+
+	if this.listenExitEarly {
+		return
+	}
 
 	time.Sleep(this.listenSleep)
 	<-ctx.Done()

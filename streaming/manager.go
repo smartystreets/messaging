@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/smartystreets/messaging/v3"
 )
@@ -43,8 +44,28 @@ func (this defaultManager) Listen() {
 	}
 }
 func (this defaultManager) listen(index int) {
-	subscriber := this.factory(this.softContext, this.subscriptions[index])
-	subscriber.Listen()
+	subscription := this.subscriptions[index]
+	for this.isAlive() {
+		subscriber := this.factory(this.softContext, subscription)
+		subscriber.Listen()
+		this.sleep(subscription.reconnectDelay)
+	}
+}
+func (this defaultManager) isAlive() bool {
+	select {
+	case <-this.softContext.Done():
+		return false
+	default:
+		return true
+	}
+}
+func (this defaultManager) sleep(duration time.Duration) {
+	if duration == 0 {
+		return
+	}
+
+	sleeper, _ := context.WithTimeout(this.softContext, duration)
+	<-sleeper.Done()
 }
 
 func (this defaultManager) Close() error {

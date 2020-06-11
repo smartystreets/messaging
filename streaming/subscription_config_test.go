@@ -47,6 +47,7 @@ func (this *SubscriptionConfigFixture) TestWhenValuesAreProvided_SubscriptionSho
 		SubscriptionOptions.BufferDelayBetweenBatches(3),
 		SubscriptionOptions.EstablishTopology(true),
 		SubscriptionOptions.FullDeliveryToHandler(true),
+		SubscriptionOptions.ReconnectDelay(5),
 		SubscriptionOptions.ShutdownStrategy(ShutdownStrategyCurrentBatch, 4),
 	)
 
@@ -60,6 +61,7 @@ func (this *SubscriptionConfigFixture) TestWhenValuesAreProvided_SubscriptionSho
 		batchCapacity:     1,
 		handleDelivery:    true,
 		bufferTimeout:     3,
+		reconnectDelay:    5,
 		shutdownStrategy:  ShutdownStrategyCurrentBatch,
 		shutdownTimeout:   4,
 	})
