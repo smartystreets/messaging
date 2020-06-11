@@ -1,4 +1,4 @@
-package sqlmq
+package batch
 
 import (
 	"context"
@@ -6,18 +6,18 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
-type dispatchSender struct {
+type Writer struct {
 	connector messaging.Connector
 
 	connection messaging.Connection
 	writer     messaging.CommitWriter
 }
 
-func newDispatchSender(config configuration) messaging.Writer {
-	return &dispatchSender{connector: config.Target}
+func NewWriter(connector messaging.Connector) messaging.Writer {
+	return &Writer{connector: connector}
 }
 
-func (this *dispatchSender) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {
+func (this *Writer) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {
 	if len(dispatches) == 0 {
 		return 0, nil
 	}
@@ -36,7 +36,7 @@ func (this *dispatchSender) Write(ctx context.Context, dispatches ...messaging.D
 	return count, err
 
 }
-func (this *dispatchSender) write(ctx context.Context, dispatches []messaging.Dispatch) (int, error) {
+func (this *Writer) write(ctx context.Context, dispatches []messaging.Dispatch) (int, error) {
 	if err := this.newWriter(ctx); err != nil {
 		return 0, err
 
@@ -52,7 +52,7 @@ func (this *dispatchSender) write(ctx context.Context, dispatches []messaging.Di
 
 	return len(dispatches), nil
 }
-func (this *dispatchSender) newWriter(ctx context.Context) (err error) {
+func (this *Writer) newWriter(ctx context.Context) (err error) {
 	if this.writer != nil {
 		return nil
 	}
@@ -65,11 +65,11 @@ func (this *dispatchSender) newWriter(ctx context.Context) (err error) {
 	return err
 }
 
-func (this *dispatchSender) Close() error {
+func (this *Writer) Close() error {
 	this.closeHandles()
 	return nil
 }
-func (this *dispatchSender) closeHandles() {
+func (this *Writer) closeHandles() {
 	if this.writer != nil {
 		_ = this.writer.Close()
 	}

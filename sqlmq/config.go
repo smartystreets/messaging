@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/smartystreets/messaging/v3"
+	"github.com/smartystreets/messaging/v3/batch"
 	"github.com/smartystreets/messaging/v3/sqlmq/adapter"
 )
 
@@ -93,7 +94,7 @@ func (singleton) apply(options ...option) option {
 		}
 
 		if this.Sender == nil {
-			this.Sender = newDispatchSender(*this)
+			this.Sender = batch.NewWriter(this.Target)
 		}
 	}
 }

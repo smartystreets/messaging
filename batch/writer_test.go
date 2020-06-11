@@ -1,8 +1,7 @@
-package sqlmq
+package batch
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
@@ -11,11 +10,11 @@ import (
 	"github.com/smartystreets/messaging/v3"
 )
 
-func TestDispatchSenderFixture(t *testing.T) {
-	gunit.Run(new(DispatchSenderFixture), t)
+func TestWriterFixture(t *testing.T) {
+	gunit.Run(new(WriterFixture), t)
 }
 
-type DispatchSenderFixture struct {
+type WriterFixture struct {
 	*gunit.Fixture
 
 	ctx      context.Context
@@ -41,21 +40,15 @@ type DispatchSenderFixture struct {
 	closeCount int
 }
 
-func (this *DispatchSenderFixture) Setup() {
+func (this *WriterFixture) Setup() {
 	this.ctx, this.shutdown = context.WithCancel(context.Background())
-	this.initializeDispatchSender()
+	this.initializeWriter()
 }
-func (this *DispatchSenderFixture) initializeDispatchSender() {
-	config := configuration{}
-	Options.apply(
-		Options.Context(this.ctx),
-		Options.StorageHandle(&sql.DB{}),
-		Options.TransportConnector(this),
-	)(&config)
-	this.writer = newDispatchSender(config)
+func (this *WriterFixture) initializeWriter() {
+	this.writer = NewWriter(this)
 }
 
-func (this *DispatchSenderFixture) TestWhenEmptySetOfDispatches_Nop() {
+func (this *WriterFixture) TestWhenEmptySetOfDispatches_Nop() {
 	this.shutdown()
 
 	count, err := this.writer.Write(this.ctx)
@@ -63,7 +56,7 @@ func (this *DispatchSenderFixture) TestWhenEmptySetOfDispatches_Nop() {
 	this.So(count, should.BeZeroValue)
 	this.So(err, should.BeNil)
 }
-func (this *DispatchSenderFixture) TestWhenWritingWithAClosedContext_ReturnContextError() {
+func (this *WriterFixture) TestWhenWritingWithAClosedContext_ReturnContextError() {
 	this.shutdown()
 
 	count, err := this.writer.Write(this.ctx, messaging.Dispatch{})
@@ -72,7 +65,7 @@ func (this *DispatchSenderFixture) TestWhenWritingWithAClosedContext_ReturnConte
 	this.So(err, should.Equal, context.Canceled)
 }
 
-func (this *DispatchSenderFixture) TestWhenWritingTheFirstTime_ItShouldOpenANewConnectionAndCommitWriter() {
+func (this *WriterFixture) TestWhenWritingTheFirstTime_ItShouldOpenANewConnectionAndCommitWriter() {
 	dispatches := []messaging.Dispatch{{MessageID: 1}, {MessageID: 2}}
 	count, err := this.writer.Write(this.ctx, dispatches...)
 
@@ -87,7 +80,7 @@ func (this *DispatchSenderFixture) TestWhenWritingTheFirstTime_ItShouldOpenANewC
 	this.So(this.closeCount, should.Equal, 0)
 }
 
-func (this *DispatchSenderFixture) TestWhenOpeningConnectionFails_ItShouldReturnUnderlyingError() {
+func (this *WriterFixture) TestWhenOpeningConnectionFails_ItShouldReturnUnderlyingError() {
 	this.connectError = errors.New("")
 
 	count, err := this.writer.Write(this.ctx, messaging.Dispatch{})
@@ -96,7 +89,7 @@ func (this *DispatchSenderFixture) TestWhenOpeningConnectionFails_ItShouldReturn
 	this.So(err, should.Equal, this.connectError)
 	this.So(this.closeCount, should.Equal, 0)
 }
-func (this *DispatchSenderFixture) TestWhenOpeningCommitWriterFails_ItShouldCloseConnectionAndReturnUnderlyingError() {
+func (this *WriterFixture) TestWhenOpeningCommitWriterFails_ItShouldCloseConnectionAndReturnUnderlyingError() {
 	this.commitWriterError = errors.New("")
 
 	count, err := this.writer.Write(this.ctx, messaging.Dispatch{})
@@ -105,7 +98,7 @@ func (this *DispatchSenderFixture) TestWhenOpeningCommitWriterFails_ItShouldClos
 	this.So(err, should.Equal, this.commitWriterError)
 	this.So(this.closeCount, should.Equal, 1)
 }
-func (this *DispatchSenderFixture) TestWhenWritingDispatchesFails_ItShouldCloseResourcesAndReturnUnderlyingError() {
+func (this *WriterFixture) TestWhenWritingDispatchesFails_ItShouldCloseResourcesAndReturnUnderlyingError() {
 	this.writeError = errors.New("")
 
 	count, err := this.writer.Write(this.ctx, messaging.Dispatch{})
@@ -114,7 +107,7 @@ func (this *DispatchSenderFixture) TestWhenWritingDispatchesFails_ItShouldCloseR
 	this.So(err, should.Equal, this.writeError)
 	this.So(this.closeCount, should.Equal, 2)
 }
-func (this *DispatchSenderFixture) TestWhenCommittingWrittenDispatchesFails_ItShouldCloseResourcesAndReturnUnderlyingError() {
+func (this *WriterFixture) TestWhenCommittingWrittenDispatchesFails_ItShouldCloseResourcesAndReturnUnderlyingError() {
 	this.commitError = errors.New("")
 
 	count, err := this.writer.Write(this.ctx, messaging.Dispatch{})
@@ -124,7 +117,7 @@ func (this *DispatchSenderFixture) TestWhenCommittingWrittenDispatchesFails_ItSh
 	this.So(this.closeCount, should.Equal, 2)
 }
 
-func (this *DispatchSenderFixture) TestWhenWritingMultipleTimes_ItShouldUseExistingConnectionAndWriter() {
+func (this *WriterFixture) TestWhenWritingMultipleTimes_ItShouldUseExistingConnectionAndWriter() {
 	_, _ = this.writer.Write(this.ctx, messaging.Dispatch{}, messaging.Dispatch{}, messaging.Dispatch{})
 
 	_, _ = this.writer.Write(this.ctx, messaging.Dispatch{}, messaging.Dispatch{})
@@ -135,7 +128,7 @@ func (this *DispatchSenderFixture) TestWhenWritingMultipleTimes_ItShouldUseExist
 	this.So(this.commitCount, should.Equal, 2)
 }
 
-func (this *DispatchSenderFixture) TestWhenClosing_ItShouldCloseUnderlyingConnectionAndWriter() {
+func (this *WriterFixture) TestWhenClosing_ItShouldCloseUnderlyingConnectionAndWriter() {
 	_, _ = this.writer.Write(this.ctx, messaging.Dispatch{})
 
 	err := this.writer.Close()
@@ -146,7 +139,7 @@ func (this *DispatchSenderFixture) TestWhenClosing_ItShouldCloseUnderlyingConnec
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (this *DispatchSenderFixture) Connect(ctx context.Context) (messaging.Connection, error) {
+func (this *WriterFixture) Connect(ctx context.Context) (messaging.Connection, error) {
 	this.connectCount++
 	this.connectContext = ctx
 	if this.connectError != nil {
@@ -156,13 +149,13 @@ func (this *DispatchSenderFixture) Connect(ctx context.Context) (messaging.Conne
 	}
 }
 
-func (this *DispatchSenderFixture) Reader(ctx context.Context) (messaging.Reader, error) {
+func (this *WriterFixture) Reader(ctx context.Context) (messaging.Reader, error) {
 	panic("nop")
 }
-func (this *DispatchSenderFixture) Writer(ctx context.Context) (messaging.Writer, error) {
+func (this *WriterFixture) Writer(ctx context.Context) (messaging.Writer, error) {
 	panic("nop")
 }
-func (this *DispatchSenderFixture) CommitWriter(ctx context.Context) (messaging.CommitWriter, error) {
+func (this *WriterFixture) CommitWriter(ctx context.Context) (messaging.CommitWriter, error) {
 	this.commitWriterCount++
 	this.commitWriterContext = ctx
 
@@ -173,21 +166,21 @@ func (this *DispatchSenderFixture) CommitWriter(ctx context.Context) (messaging.
 	}
 }
 
-func (this *DispatchSenderFixture) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {
+func (this *WriterFixture) Write(ctx context.Context, dispatches ...messaging.Dispatch) (int, error) {
 	this.writeContext = ctx
 	this.writeDispatches = append(this.writeDispatches, dispatches...)
 	return len(dispatches), this.writeError
 }
-func (this *DispatchSenderFixture) Commit() error {
+func (this *WriterFixture) Commit() error {
 	this.commitCount++
 	return this.commitError
 }
-func (this *DispatchSenderFixture) Rollback() error {
+func (this *WriterFixture) Rollback() error {
 	this.rollbackCount++
 	return nil
 }
 
-func (this *DispatchSenderFixture) Close() error {
+func (this *WriterFixture) Close() error {
 	this.closeCount++
 	return nil
 }
