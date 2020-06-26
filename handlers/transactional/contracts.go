@@ -2,6 +2,7 @@ package transactional
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/smartystreets/messaging/v3"
 )
@@ -31,3 +32,5 @@ type State struct {
 }
 
 type handlerFunc func(state State) messaging.Handler
+
+var errNilContext = errors.New("context must not be nil")

@@ -64,6 +64,10 @@ func (this *Fixture) handle() {
 	this.handler.Handle(this.ctx, this.messages...)
 }
 
+func (this *Fixture) TestNilPanic_ItShouldPanic() {
+	this.ctx = nil
+	this.So(this.handle, should.PanicWith, errNilContext)
+}
 func (this *Fixture) TestWhenOpeningConnectionFails_ItShouldPanic() {
 	this.connectError = errors.New("")
 
