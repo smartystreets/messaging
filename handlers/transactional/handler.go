@@ -16,6 +16,10 @@ type handler struct {
 }
 
 func (this handler) Handle(ctx context.Context, messages ...interface{}) {
+	if ctx == nil {
+		panic(errNilContext)
+	}
+
 	connection, err := this.connector.Connect(ctx)
 	if err != nil {
 		this.logger.Printf("[WARN] Unable to begin transaction [%s].", err)
