@@ -171,7 +171,7 @@ func (this *SubscriberFixture) TestWhenShutdownStrategyIsImmediate_HardAndSoftSh
 	started := time.Now().UTC()
 	this.subscriber.Listen()
 
-	this.So(time.Since(started), should.BeLessThan, this.subscription.shutdownTimeout)
+	this.So(time.Since(started), should.BeLessThan, this.subscription.shutdownTimeout*2)
 }
 
 func (this *SubscriberFixture) TestWhenHardShutdownIsInvoked_StillWaitForWorkersToConclude() {

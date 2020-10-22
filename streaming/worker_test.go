@@ -200,7 +200,7 @@ func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_SleepAfterAc
 
 	this.worker.Listen()
 
-	this.So(time.Since(this.acknowledgeTimestamp[0]), should.BeBetween, timeout, timeout*2)
+	this.So(time.Since(this.acknowledgeTimestamp[0]), should.BeBetween, timeout, timeout*3)
 }
 func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_DoNotSleepAfterAcknowledgementIfMoreWorkAvailable() {
 	const timeout = time.Millisecond * 5
@@ -216,7 +216,7 @@ func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_DoNotSleepAf
 
 	duration := this.acknowledgeTimestamp[0].Sub(this.acknowledgeTimestamp[1])
 	this.So(duration, should.BeLessThan, timeout) // no sleep delay between first and second acknowledgements
-	this.So(time.Since(this.acknowledgeTimestamp[1]), should.BeBetween, timeout, timeout*2)
+	this.So(time.Since(this.acknowledgeTimestamp[1]), should.BeBetween, timeout, timeout*3)
 	this.So(this.acknowledgeCount, should.Equal, 2)
 }
 

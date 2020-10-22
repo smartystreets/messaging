@@ -66,7 +66,7 @@ func (this *ManagerFixture) TestWhenListening_NewSubscriberListenersCreatedAndSt
 	}()
 	this.manager.Listen()
 
-	this.So(time.Since(started), should.BeBetween, this.listenSleep, this.listenSleep*5)
+	this.So(time.Since(started), should.BeBetween, this.listenSleep, this.listenSleep*10)
 	this.So(this.subscriberCount, should.Equal, len(this.subscriptions))
 	this.So(this.listenCount, should.Equal, len(this.subscriptions))
 	this.So(this.subscriberContext, should.NotBeNil)
