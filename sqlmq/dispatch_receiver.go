@@ -2,6 +2,7 @@ package sqlmq
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/smartystreets/messaging/v3"
 	"github.com/smartystreets/messaging/v3/sqlmq/adapter"
@@ -42,7 +43,10 @@ func (this *dispatchReceiver) Commit() error {
 		return err
 	}
 
-	if err := this.tx.Commit(); err != nil {
+	if err := this.commit(); err == context.DeadlineExceeded {
+		this.logger.Printf("[INFO] Unable to commit messages to durable storage [%s].", err)
+		return err
+	} else if err != nil {
 		this.logger.Printf("[WARN] Unable to commit messages to durable storage [%s].", err)
 		return err
 	}
@@ -58,6 +62,14 @@ func (this *dispatchReceiver) Commit() error {
 
 	// NOTE: we don't clear the buffer because the receiver is thrown away after commit
 	return nil
+}
+func (this *dispatchReceiver) commit() error {
+	err := this.tx.Commit()
+	if err == sql.ErrTxDone && this.ctx.Err() == context.DeadlineExceeded {
+		return context.DeadlineExceeded
+	}
+
+	return err
 }
 
 func (this *dispatchReceiver) Rollback() error { return this.tx.Rollback() }

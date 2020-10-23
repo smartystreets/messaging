@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/smartystreets/assertions/should"
 	"github.com/smartystreets/gunit"
@@ -119,6 +120,17 @@ func (this *DispatchReceiverFixture) TestWhenCommittingWithoutAnyDispatches_Comm
 	err := this.writer.Commit()
 
 	this.So(err, should.BeNil)
+	this.So(this.commitCalls, should.Equal, 1)
+}
+func (this *DispatchReceiverFixture) TestWhenCommittingIndicatesDone_ItShouldReturnContextDeadlineExceeded() {
+	this.commitError = sql.ErrTxDone
+	this.ctx, _ = context.WithTimeout(context.Background(), time.Millisecond)
+	this.initializeDispatchWriter()
+
+	time.Sleep(time.Millisecond * 5)
+	err := this.writer.Commit()
+
+	this.So(err, should.Resemble, context.DeadlineExceeded)
 	this.So(this.commitCalls, should.Equal, 1)
 }
 

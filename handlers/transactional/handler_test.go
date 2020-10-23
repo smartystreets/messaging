@@ -126,6 +126,17 @@ func (this *Fixture) TestWhenCommitOperationFails_ItShouldPanicAndRollBack() {
 	this.So(this.monitorCommitCount, should.Equal, 0)
 	this.So(this.monitorRollbackCount, should.Equal, 1)
 }
+func (this *Fixture) TestWhenCommitOperationFailsWithContextError_ItShouldPanicAndRollBackAndLogInfoMessage() {
+	this.commitError = context.Canceled
+
+	this.So(this.handle, should.PanicWith, this.commitError)
+	this.So(this.commitCount, should.Equal, 1)
+	this.So(this.rollbackCount, should.Equal, 1)
+	this.So(this.closeCount, should.Equal, 2) // close connection and writer
+	this.So(this.monitorCommitErrors, should.Resemble, []error{this.commitError})
+	this.So(this.monitorCommitCount, should.Equal, 0)
+	this.So(this.monitorRollbackCount, should.Equal, 1)
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

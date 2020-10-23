@@ -41,7 +41,7 @@ func (this handler) Handle(ctx context.Context, messages ...interface{}) {
 	handler := this.factory(txCtx.State())
 	handler.Handle(ctx, messages...)
 	if err := writer.Commit(); err != nil {
-		this.logger.Printf("[WARN] Unable to commit transaction [%s].", err)
+		this.logger.Printf("[%s] Unable to commit transaction [%s].", logSeverity(err), err)
 		this.monitor.TransactionCommitted(err)
 		panic(err)
 	}
@@ -63,6 +63,14 @@ func (this handler) finally(ctx *transactionalContext, err interface{}) {
 func closeResource(resource io.Closer) {
 	if resource != nil {
 		_ = resource.Close()
+	}
+}
+func logSeverity(err error) string {
+	switch err {
+	case context.Canceled, context.DeadlineExceeded:
+		return "INFO"
+	default:
+		return "WARN"
 	}
 }
 
