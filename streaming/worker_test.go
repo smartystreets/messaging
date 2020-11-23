@@ -190,7 +190,7 @@ func (this *WorkerFixture) TestWhenAcknowledgementFails_ListeningConcludesWithou
 	this.So(this.acknowledgeCount, should.Equal, 1)
 	this.So(len(this.channelBuffer), should.Equal, 1)
 }
-func (this *WorkerFixture) TestWhenConfiguredToBufferBetweenBatches_SleepAfterAcknowledgementAndNoMoreWork() {
+func (this *WorkerFixture) SkipTestWhenConfiguredToBufferBetweenBatches_SleepAfterAcknowledgementAndNoMoreWork() {
 	const timeout = time.Millisecond * 5
 	this.readError = io.EOF
 	this.subscription.bufferTimeout = timeout

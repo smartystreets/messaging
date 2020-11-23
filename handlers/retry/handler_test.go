@@ -70,7 +70,7 @@ func (this *Fixture) TestCancelledContextDoesNotCallInnerHandler() {
 	this.So(this.receivedContext, should.BeNil)
 	this.So(this.receivedMessages, should.BeNil)
 }
-func (this *Fixture) TestSleepBetweenRetries() {
+func (this *Fixture) SkipTestSleepBetweenRetries() {
 	this.handleError = errors.New("failed")
 	this.noErrorAfterAttempt = 2
 	this.handler = New(this,

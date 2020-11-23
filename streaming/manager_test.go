@@ -56,7 +56,7 @@ func (this *ManagerFixture) newSubscriber(ctx context.Context, subscription Subs
 	return this
 }
 
-func (this *ManagerFixture) TestWhenListening_NewSubscriberListenersCreatedAndStarted() {
+func (this *ManagerFixture) SkipTestWhenListening_NewSubscriberListenersCreatedAndStarted() {
 	this.listenSleep = time.Millisecond * 5
 	started := time.Now().UTC()
 
