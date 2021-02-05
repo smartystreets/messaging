@@ -8,18 +8,24 @@ import (
 )
 
 type defaultDeliveryDecoder struct {
-	messageTypes map[string]reflect.Type
-	contentTypes map[string]Deserializer
-	monitor      monitor
-	logger       logger
+	messageTypes                map[string]reflect.Type
+	contentTypes                map[string]Deserializer
+	ignoreUnknownMessageTypes   bool
+	ignoreUnknownContentTypes   bool
+	ignoreDeserializationErrors bool
+	monitor                     monitor
+	logger                      logger
 }
 
 func newDeliveryDecoder(config configuration) DeliveryDecoder {
 	return defaultDeliveryDecoder{
-		messageTypes: config.ReadTypes,
-		contentTypes: config.Deserializers,
-		monitor:      config.Monitor,
-		logger:       config.Logger,
+		messageTypes:                config.ReadTypes,
+		contentTypes:                config.Deserializers,
+		ignoreUnknownMessageTypes:   config.IgnoreUnknownMessageTypes,
+		ignoreUnknownContentTypes:   config.IgnoreUnknownContentTypes,
+		ignoreDeserializationErrors: config.IgnoreDeserializationErrors,
+		monitor:                     config.Monitor,
+		logger:                      config.Logger,
 	}
 }
 
@@ -30,30 +36,57 @@ func (this defaultDeliveryDecoder) Decode(delivery *messaging.Delivery) error {
 
 	instanceType, found := this.messageTypes[delivery.MessageType]
 	if !found {
-		this.monitor.MessageDecoded(ErrMessageTypeNotFound)
-		this.logger.Printf("[WARN] Unable to decode message of type [%s].", delivery.MessageType)
-		return wrapError(fmt.Errorf("%w: [%s]", ErrMessageTypeNotFound, delivery.MessageType))
+		return this.handleUnknownMessageType(delivery)
 	}
 
 	deserializer, found := this.contentTypes[delivery.ContentType]
 	if !found {
-		this.monitor.MessageDecoded(ErrUnknownContentType)
-		this.logger.Printf("[WARN] Unable to decode message with Content-Type [%s].", delivery.ContentType)
-		return wrapError(fmt.Errorf("%w: [%s]", ErrUnknownContentType, delivery.ContentType))
+		return this.handleUnknownContentType(delivery)
 	}
 
 	pointer := reflect.New(instanceType)
-	if err := deserializer.Deserialize(delivery.Payload, pointer.Interface()); err != nil {
-		this.monitor.MessageDecoded(err)
-		this.logger.Printf("[WARN] Unable to deserialize message of [%s]: %s", delivery.MessageType, err)
-		return wrapError(err)
+	err := deserializer.Deserialize(delivery.Payload, pointer.Interface())
+	if err != nil {
+		return this.handleDeserializationError(delivery, err)
 	}
 
 	this.monitor.MessageDecoded(nil)
 	delivery.Message = pointer.Elem().Interface()
 	return nil
 }
+func (this defaultDeliveryDecoder) handleUnknownMessageType(delivery *messaging.Delivery) error {
+	this.monitor.MessageDecoded(ErrMessageTypeNotFound)
 
+	if this.ignoreUnknownMessageTypes {
+		this.logger.Printf("[WARN] Ignoring unknown message of type [%s].", delivery.MessageType)
+		return nil
+	} else {
+		this.logger.Printf("[WARN] Unable to decode message of type [%s].", delivery.MessageType)
+		return wrapError(fmt.Errorf("%w: [%s]", ErrMessageTypeNotFound, delivery.MessageType))
+	}
+}
+func (this defaultDeliveryDecoder) handleUnknownContentType(delivery *messaging.Delivery) error {
+	this.monitor.MessageDecoded(ErrUnknownContentType)
+
+	if this.ignoreUnknownContentTypes {
+		this.logger.Printf("[WARN] Ignoring message with Content-Type [%s].", delivery.ContentType)
+		return nil
+	} else {
+		this.logger.Printf("[WARN] Unable to decode message with Content-Type [%s].", delivery.ContentType)
+		return wrapError(fmt.Errorf("%w: [%s]", ErrUnknownContentType, delivery.ContentType))
+	}
+}
+func (this defaultDeliveryDecoder) handleDeserializationError(delivery *messaging.Delivery, err error) error {
+	this.monitor.MessageDecoded(err)
+
+	if this.ignoreDeserializationErrors {
+		this.logger.Printf("[WARN] Ignoring deserialization error for message of type [%s]: %s", delivery.MessageType, err)
+		return nil
+	} else {
+		this.logger.Printf("[WARN] Unable to deserialize message of type [%s]: %s", delivery.MessageType, err)
+		return wrapError(err)
+	}
+}
 func wrapError(err error) error {
 	return fmt.Errorf("%w: %s", ErrSerializationFailure, err)
 }

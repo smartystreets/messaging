@@ -19,6 +19,10 @@ type configuration struct {
 	WriteTypes map[reflect.Type]string
 	ReadTypes  map[string]reflect.Type
 
+	IgnoreUnknownMessageTypes   bool
+	IgnoreUnknownContentTypes   bool
+	IgnoreDeserializationErrors bool
+
 	Deserializers map[string]Deserializer
 	Serializer    Serializer
 
@@ -57,6 +61,15 @@ func (singleton) ReadTypes(value map[string]reflect.Type) option {
 func (singleton) WriteTypes(value map[reflect.Type]string) option {
 	return func(this *configuration) { this.WriteTypes = value }
 }
+func (singleton) IgnoreUnknownMessageTypes(value bool) option {
+	return func(this *configuration) { this.IgnoreUnknownMessageTypes = value }
+}
+func (singleton) IgnoreUnknownContentTypes(value bool) option {
+	return func(this *configuration) { this.IgnoreUnknownContentTypes = value }
+}
+func (singleton) IgnoreDeserializationErrors(value bool) option {
+	return func(this *configuration) { this.IgnoreDeserializationErrors = value }
+}
 func (singleton) Logger(value logger) option {
 	return func(this *configuration) { this.Logger = value }
 }
@@ -85,10 +98,13 @@ func (singleton) defaults(options ...option) []option {
 	const emptyContentType = ""
 
 	return append([]option{
-		Options.Logger(defaultLogger),
-		Options.Monitor(defaultMonitor),
 		Options.Serializer(defaultSerializer),
 		Options.AddDeserializer(defaultSerializer, defaultSerializer.ContentType(), emptyContentType),
+		Options.IgnoreUnknownMessageTypes(false),
+		Options.IgnoreUnknownContentTypes(false),
+		Options.IgnoreDeserializationErrors(false),
+		Options.Logger(defaultLogger),
+		Options.Monitor(defaultMonitor),
 	}, options...)
 }
 

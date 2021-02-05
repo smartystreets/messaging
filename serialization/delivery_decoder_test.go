@@ -17,6 +17,8 @@ func TestDeliveryDecoderFixture(t *testing.T) {
 type DeliveryDecoderFixture struct {
 	*gunit.Fixture
 
+	config configuration
+
 	readTypes     map[string]reflect.Type
 	deserializers map[string]Deserializer
 	delivery      messaging.Delivery
@@ -32,12 +34,17 @@ type DeliveryDecoderFixture struct {
 func (this *DeliveryDecoderFixture) Setup() {
 	this.readTypes = map[string]reflect.Type{}
 	this.deserializers = map[string]Deserializer{}
+	this.config = configuration{Deserializers: this.deserializers}
 	this.newDecoder()
 }
 func (this *DeliveryDecoderFixture) newDecoder() {
-	config := configuration{Deserializers: this.deserializers}
-	Options.apply(Options.ReadTypes(this.readTypes))(&config)
-	this.decoder = newDeliveryDecoder(config)
+	Options.apply(
+		Options.ReadTypes(this.readTypes),
+		Options.IgnoreUnknownMessageTypes(this.config.IgnoreUnknownMessageTypes),
+		Options.IgnoreUnknownContentTypes(this.config.IgnoreUnknownContentTypes),
+		Options.IgnoreDeserializationErrors(this.config.IgnoreDeserializationErrors),
+	)(&this.config)
+	this.decoder = newDeliveryDecoder(this.config)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,6 +116,51 @@ func (this *DeliveryDecoderFixture) TestWhenDeliveryAlreadyHasMessage_SkipDecodi
 
 	this.So(err, should.BeNil)
 	this.So(this.deserializeCalls, should.BeZeroValue)
+}
+
+func (this *DeliveryDecoderFixture) TestWhenDeliveryMessageTypeNotFound_IgnoreUnknownMessageType_SkipDecoding() {
+	this.config.IgnoreUnknownMessageTypes = true
+	this.newDecoder()
+	this.delivery.MessageType = "not found"
+	this.delivery.Payload = []byte("payload")
+
+	err := this.decoder.Decode(&this.delivery)
+
+	this.So(err, should.BeNil)
+	this.So(this.delivery.Message, should.BeNil)
+	this.So(this.deserializeCalls, should.Equal, 0)
+}
+
+func (this *DeliveryDecoderFixture) TestWhenDeliveryContentTypeNotFound_IgnoreUnknownContentType_SkipDecoding() {
+	this.config.IgnoreUnknownContentTypes = true
+	this.newDecoder()
+	this.delivery.MessageType = "found"
+	this.delivery.ContentType = "not-found"
+	this.delivery.Payload = []byte("payload")
+	this.readTypes["found"] = reflect.TypeOf(0)
+
+	err := this.decoder.Decode(&this.delivery)
+
+	this.So(err, should.BeNil)
+	this.So(this.delivery.Message, should.BeNil)
+	this.So(this.deserializeCalls, should.Equal, 0)
+}
+
+func (this *DeliveryDecoderFixture) TestWhenDeserializationFails_IgnoreDeserializationError_Success() {
+	this.config.IgnoreDeserializationErrors = true
+	this.newDecoder()
+	this.delivery.MessageType = "found"
+	this.delivery.ContentType = "found"
+	this.delivery.Payload = []byte("payload")
+	this.readTypes["found"] = reflect.TypeOf(0)
+	this.deserializers["found"] = this
+	this.deserializeError = errors.New("error")
+
+	err := this.decoder.Decode(&this.delivery)
+
+	this.So(err, should.BeNil)
+	this.So(this.delivery.Message, should.BeNil)
+	this.So(this.deserializeCalls, should.Equal, 1)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
